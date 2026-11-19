@@ -6,8 +6,8 @@ import { LicenseBoundaryDiagram } from "../src/components/LicenseBoundaryDiagram
 import { Scoreboard } from "../src/components/Scoreboard";
 import { SideBySide } from "../src/components/SideBySide";
 import { TopologyBuilder } from "../src/components/TopologyBuilder";
-import { DEFAULT_PRICES } from "../src/calc/rules";
-import { setHosting } from "../src/calc/topology";
+import { DEFAULT_PRICES, MAX_MEMBERS } from "../src/calc/rules";
+import { addMember, setHosting } from "../src/calc/topology";
 import { PRESETS } from "../src/presets";
 
 const preset = (id: string) => {
@@ -26,6 +26,10 @@ describe("render smoke tests", () => {
     expect(html).toContain("Break-even");
     expect(html).toContain("Best deal");
     expect(html).toContain("Pin as baseline");
+    expect(html).toContain("MongoDB Enterprise Advanced pricing guidance");
+    expect(html.toLowerCase()).not.toContain("internal");
+    expect(html).not.toContain("Pricing Guide");
+    expect(html).not.toContain("Licensing Clarification");
   });
 
   it("renders the VM diagram with free arbiters and tap controls", () => {
@@ -68,6 +72,29 @@ describe("render smoke tests", () => {
     const html = renderToStaticMarkup(<TopologyBuilder topology={preset("rs-small").topology} showK8s={false} onChange={noop} />);
     expect(html).toContain("512 GB");
     expect(html).toContain('aria-pressed="true"');
+  });
+
+  it("sizes the members slider to MAX_MEMBERS and the real count", () => {
+    let topology = preset("rs-small").topology;
+    while (topology.members.length < 20) topology = addMember(topology);
+    const html = renderToStaticMarkup(<TopologyBuilder topology={topology} showK8s={false} onChange={noop} />);
+    expect(html).toContain('aria-label="Members slider"');
+    expect(html).toContain(`max="${MAX_MEMBERS}"`);
+    expect(html).not.toContain('max="15"');
+    expect(html).toMatch(/aria-label="Members slider"[^>]*value="20"/);
+  });
+
+  it("disables arbiter on the last data-bearing member", () => {
+    const base = preset("rs-small").topology;
+    const oneData = {
+      ...base,
+      members: base.members.map((member, index) => (index === 0 ? member : { ...member, role: "arbiter" as const })),
+    };
+    const html = renderToStaticMarkup(<TopologyBuilder topology={oneData} showK8s={false} onChange={noop} />);
+    const member = (n: number) => html.split(`aria-label="Role of member ${n}"`)[1]?.split("</select>")[0] ?? "";
+    expect(member(1)).toContain('value="arbiter" disabled=""');
+    expect(member(2)).not.toContain('value="arbiter" disabled=""');
+    expect(member(3)).not.toContain('value="arbiter" disabled=""');
   });
 });
 
@@ -120,5 +147,22 @@ describe("chart", () => {
     expect(interactive).toContain("Jump to break-even (86 GB)");
     expect(interactive).toContain("scrub-ram");
     expect(readOnly).not.toContain("Jump to break-even");
+  });
+
+  it("explains the You dot when data-bearing members differ in size", () => {
+    const even = preset("rs-small").topology;
+    const mixed = {
+      ...even,
+      members: even.members.map((member, index) => ({ ...member, ramGB: index === 0 ? 512 : 16 })),
+    };
+    const mixedHtml = renderToStaticMarkup(<BreakEvenChart topology={mixed} prices={DEFAULT_PRICES} />);
+    const evenHtml = renderToStaticMarkup(<BreakEvenChart topology={even} prices={DEFAULT_PRICES} />);
+    const arbiterOnly = renderToStaticMarkup(
+      <BreakEvenChart topology={preset("rs-arbiter").topology} prices={DEFAULT_PRICES} />,
+    );
+    expect(mixedHtml).toContain("equal-size members");
+    expect(mixedHtml).toContain("The dot shows the real cost.");
+    expect(evenHtml).not.toContain("equal-size members");
+    expect(arbiterOnly).not.toContain("equal-size members");
   });
 });

@@ -1,7 +1,7 @@
 import type { K8sSettings, Prices } from "./types";
 
 /**
- * Licensing rules, from the EA Pricing Guide (internal, updated 2026-11-04).
+ * Licensing rules for MongoDB Enterprise Advanced.
  * Rules are fixed here. Prices are editable placeholders.
  */
 
@@ -34,11 +34,11 @@ export const DEFAULT_K8S: K8sSettings = {
 
 export const SOURCES = [
   {
-    title: "Enterprise Advanced Pricing Guide (internal, updated 2026-11-04)",
+    title: "MongoDB Enterprise Advanced pricing guidance",
     note: "Per-node rule, pool license, free arbiters and config servers, containers are pool-only.",
   },
   {
-    title: "EA RAM Pool Licensing Clarification (internal customer message, undated)",
+    title: "MongoDB Enterprise Advanced container licensing guidance",
     note: "On Kubernetes the pool counts each data-bearing mongod container's memory limit, not the worker RAM.",
   },
 ] as const;

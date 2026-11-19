@@ -75,6 +75,8 @@ export function BreakEvenChart({ topology, prices, onRamChange }: Props) {
   const decided = regions.filter((region) => region.winner !== "tie");
 
   const evaluation = evaluate(topology, prices);
+  const firstRam = members[0]?.ramGB;
+  const sizesDiffer = members.length > 1 && members.some((member) => member.ramGB !== firstRam);
   const dotX = Math.min(Math.max(1, avgRam), maxGB);
   const nearest = nearestCrossover(avgRam, crossovers);
   const fmt = (value: number) => money(value, prices.currency);
@@ -177,6 +179,12 @@ export function BreakEvenChart({ topology, prices, onRamChange }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {sizesDiffer && (
+        <p className="hint on-dark chart-mixed-note">
+          Members differ in size. The curve assumes equal-size members at the average RAM. The dot shows the real cost.
+        </p>
+      )}
 
       {onRamChange && (
         <div className="scrub no-print">

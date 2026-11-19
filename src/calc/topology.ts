@@ -80,13 +80,25 @@ export const setMemberCount = (topology: Topology, count: number): Topology => {
   );
 };
 
+/**
+ * Member-count slider. The thumb tracks the real count, up to MAX_MEMBERS.
+ * If the set is already larger than the slider can show, an event that only
+ * reports that clamped thumb is ignored, so touching the control cannot
+ * silently delete members.
+ */
+export const setMemberCountFromSlider = (topology: Topology, next: number): Topology => {
+  const count = topology.members.length;
+  const shown = Math.min(count, MAX_MEMBERS);
+  const requested = clamp(Math.round(Number.isFinite(next) ? next : count), 1, MAX_MEMBERS);
+  if (requested === shown && shown < count) return topology;
+  return setMemberCount(topology, requested);
+};
+
 /** Arbiter <-> secondary. Never turns the last data-bearing member into an arbiter. */
 export const toggleArbiter = (topology: Topology, id: number): Topology => {
   const target = topology.members.find((member) => member.id === id);
   if (!target || topology.kind === "single") return topology;
-  if (target.role === "arbiter") return updateMember(topology, id, { role: "secondary" });
-  const othersData = topology.members.filter((member) => member.id !== id && isDataBearing(member));
-  return othersData.length === 0 ? topology : updateMember(topology, id, { role: "arbiter" });
+  return updateMember(topology, id, { role: target.role === "arbiter" ? "secondary" : "arbiter" });
 };
 
 export const removeMember = (topology: Topology, id: number): Topology => {
@@ -99,14 +111,24 @@ export const updateMember = (
   topology: Topology,
   id: number,
   patch: Partial<Pick<Member, "role" | "vcpu" | "ramGB">>,
-): Topology => ({
-  ...topology,
-  members: topology.members.map((member) =>
-    member.id === id
-      ? makeMember(member.id, patch.role ?? member.role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB)
-      : member,
-  ),
-});
+): Topology => {
+  const current = topology.members.find((member) => member.id === id);
+  if (!current) return topology;
+  const role = patch.role ?? current.role;
+  const removingLastData =
+    role === "arbiter" &&
+    isDataBearing(current) &&
+    !topology.members.some((member) => member.id !== id && isDataBearing(member));
+  if (removingLastData) return topology;
+  return {
+    ...topology,
+    members: topology.members.map((member) =>
+      member.id === id
+        ? makeMember(member.id, role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB)
+        : member,
+    ),
+  };
+};
 
 /** Sets every member's RAM and vCPU at once, for "all members the same size". */
 export const setAllSizes = (
