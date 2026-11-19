@@ -1,0 +1,125 @@
+/* "Export PDF" uses window.print(). Choose "Save as PDF" in the print dialog. */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .app {
+    max-width: none;
+    padding: 0;
+  }
+
+  .hero {
+    margin: 0 0 8mm;
+    padding: 8mm;
+    border-radius: 0;
+  }
+
+  .hero h1 {
+    font-size: 30pt;
+  }
+
+  .lede {
+    font-size: 10pt;
+  }
+
+  .section {
+    margin: 6mm 0;
+  }
+
+  .calc-grid {
+    display: block;
+  }
+
+  .calc-left {
+    display: none;
+  }
+
+  .calc-right {
+    gap: 5mm;
+  }
+
+  .diagram,
+  .result,
+  .verdict,
+  .side,
+  .chart-panel,
+  .report-inputs table {
+    break-inside: avoid;
+  }
+
+  .chart-panel {
+    break-before: page;
+    margin-top: 0;
+  }
+
+  .chart-wrap {
+    height: 340px;
+  }
+
+  .result-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .side-by-side {
+    grid-template-columns: 1fr;
+  }
+
+  .report-inputs {
+    margin: 6mm 0;
+    font-size: 9.5pt;
+  }
+
+  .report-inputs h2 {
+    font-size: 16pt;
+  }
+
+  .report-inputs table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4mm;
+  }
+
+  .report-inputs th,
+  .report-inputs td {
+    border: 1px solid #c1c7cd;
+    padding: 2mm 3mm;
+    text-align: left;
+  }
+
+  .report-inputs th {
+    background: #e8edeb;
+    width: 28%;
+  }
+
+  .members-table th {
+    width: auto;
+  }
+
+  .footer {
+    break-inside: avoid;
+    font-size: 8.5pt;
+  }
+}
