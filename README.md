@@ -92,6 +92,8 @@ npx vercel          # preview
 npx vercel --prod   # production
 ```
 
+Live: https://ea-license-calculator.vercel.app (Vercel team `guide-v`, deployed with the CLI; the GitHub repo is not yet connected for auto-deploys).
+
 Or import the repository in Vercel and keep the defaults. If prices or rules are updated to real figures, consider protecting the deployment (Vercel password protection or SSO), because internal pricing should not be public.
 
 ## Keeping prices current

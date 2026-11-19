@@ -72,3 +72,4 @@ Core tests cover: per-node license counts (256, 257, 384, 512, 513, 768, 769 GB)
 - 2026-11-19: Initial build of the full app from the approved plan.
 - 2026-11-19: Game layer: scoreboard, baseline, badges, interactive diagram and chart, text cut.
 - 2026-11-19: Pool is one 256 GB license priced per license; tiers and knapsack removed; tests, presets, docs updated.
+- 2026-11-19: Deployed to Vercel (team guide-v, project ea-license-calculator) with the CLI. Why CLI: linking the GitHub repo failed because the Vercel GitHub app lacks access to the Guide-V org, so pushes do not auto-deploy yet.
