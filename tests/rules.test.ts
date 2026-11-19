@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { evaluate, recommend } from "../src/calc/evaluate";
-import { DEFAULT_PRICES } from "../src/calc/rules";
+import { DEFAULT_PRICES, SOURCES } from "../src/calc/rules";
 import { replicaSet } from "../src/calc/topology";
 
 /** Mirrors worked examples from the EA Pricing Guide, using placeholder prices. */
@@ -26,5 +26,15 @@ describe("guide examples", () => {
     const evaluation = evaluate(small, DEFAULT_PRICES);
     expect(evaluation.pool).toMatchObject({ licenses: 1, cost: 250 });
     expect(recommend(evaluation).winner).toBe("ramPool");
+  });
+});
+
+describe("public source lines", () => {
+  it("uses generic titles and does not name internal documents", () => {
+    const text = SOURCES.map((source) => `${source.title} ${source.note}`).join("\n");
+    expect(text).toContain("MongoDB Enterprise Advanced pricing guidance");
+    expect(text.toLowerCase()).not.toContain("internal");
+    expect(text).not.toContain("Pricing Guide");
+    expect(text).not.toContain("Licensing Clarification");
   });
 });

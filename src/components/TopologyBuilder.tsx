@@ -7,6 +7,7 @@ import {
   setK8s,
   setKind,
   setMemberCount,
+  setMemberCountFromSlider,
   updateMember,
 } from "../calc/topology";
 import type { Role, Topology } from "../calc/types";
@@ -68,9 +69,9 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
             aria-label="Members slider"
             type="range"
             min={1}
-            max={15}
-            value={Math.min(15, count)}
-            onChange={(event) => onChange(setMemberCount(topology, Number(event.target.value)))}
+            max={MAX_MEMBERS}
+            value={Math.min(count, MAX_MEMBERS)}
+            onChange={(event) => onChange(setMemberCountFromSlider(topology, Number(event.target.value)))}
           />
         </div>
       )}
@@ -156,11 +157,14 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
                   value={member.role}
                   onChange={(event) => onChange(updateMember(topology, member.id, { role: event.target.value as Role }))}
                 >
-                  {ROLES.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
+                  {ROLES.map((role) => {
+                    const lastDataBearing = role.value === "arbiter" && isDataBearing(member) && dataMembers.length === 1;
+                    return (
+                      <option key={role.value} value={role.value} disabled={lastDataBearing}>
+                        {role.label}
+                      </option>
+                    );
+                  })}
                 </select>
                 <input
                   aria-label={`${ramLabel} of member ${index + 1}`}

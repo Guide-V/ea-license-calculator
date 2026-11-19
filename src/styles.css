@@ -816,6 +816,11 @@ input[type="number"] {
   margin-top: 0.5rem;
 }
 
+.chart-mixed-note {
+  margin: 0.35rem 0 0;
+  max-width: 46rem;
+}
+
 .chart-legend {
   list-style: none;
   display: flex;
