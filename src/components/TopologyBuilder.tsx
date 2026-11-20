@@ -183,6 +183,15 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
                     </option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`Remove member ${index + 1}`}
+                  onClick={() => onChange(removeMember(topology, member.id))}
+                >
+                  x
+                </button>
+                <span className="member-sizes">
                 <input
                   aria-label={`${ramLabel} of member ${index + 1}`}
                   type="number"
@@ -201,14 +210,7 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
                   onChange={(event) => onChange(updateMember(topology, member.id, { vcpu: Number(event.target.value) }))}
                 />
                 <span className="unit">vCPU</span>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label={`Remove member ${index + 1}`}
-                  onClick={() => onChange(removeMember(topology, member.id))}
-                >
-                  x
-                </button>
+                </span>
               </li>
             ))}
           </ul>

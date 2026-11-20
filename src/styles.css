@@ -410,10 +410,21 @@ input[type="number"] {
 }
 
 .member-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.member-row select {
+  min-width: 0;
+}
+
+.member-sizes {
+  grid-column: 2 / -1;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex-wrap: wrap;
 }
 
 .member-row input[type="number"] {
