@@ -115,12 +115,6 @@ export const achievements = (
       unlocked: evaluation.pool.coveredGB > 0 && fill >= 90,
     },
     {
-      id: "free-rider",
-      label: "Free rider",
-      hint: "Add an arbiter. It costs nothing",
-      unlocked: topology.members.some((member) => member.role === "arbiter"),
-    },
-    {
       id: "kube-cutter",
       label: "Kube cutter",
       hint: "On Kubernetes, 75%+ of worker RAM stays uncounted",

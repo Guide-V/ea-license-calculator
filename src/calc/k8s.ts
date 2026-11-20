@@ -1,4 +1,4 @@
-import { billableMembers, isDataBearing } from "./members";
+import { billableMembers } from "./members";
 import type { Member, Topology } from "./types";
 
 /** On Kubernetes the pool counts pod memory limits, not worker RAM. */
@@ -20,13 +20,12 @@ const chunk = <T>(items: readonly T[], size: number): readonly (readonly T[])[] 
 /** Packs pods onto workers, in order, `podsPerWorker` at a time. */
 export const layoutWorkers = (topology: Topology): readonly Worker[] =>
   chunk(topology.members, Math.max(1, topology.k8s.podsPerWorker)).map((pods, index) => {
-    const countedGB = pods.filter(isDataBearing).reduce((sum, pod) => sum + pod.ramGB, 0);
     const podsGB = pods.reduce((sum, pod) => sum + pod.ramGB, 0);
     return {
       index,
       pods,
       ramGB: topology.k8s.workerRamGB,
-      countedGB,
+      countedGB: podsGB,
       notCountedGB: Math.max(0, topology.k8s.workerRamGB - podsGB),
       overCommitted: podsGB > topology.k8s.workerRamGB,
     };

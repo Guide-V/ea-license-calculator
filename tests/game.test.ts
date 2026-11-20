@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { breakEvenPoints, costCurve } from "../src/calc/breakEven";
 import { evaluate, recommend } from "../src/calc/evaluate";
 import { DEFAULT_PRICES } from "../src/calc/rules";
-import { makeMember, replicaSet, setHosting, setK8s, singleNode, toggleArbiter } from "../src/calc/topology";
+import { replicaSet, setHosting, setK8s, singleNode } from "../src/calc/topology";
 import {
   FILL_LEVELS,
   SAVINGS_LEVELS,
@@ -14,7 +14,6 @@ import {
   poolFillPct,
   poolHeadroomGB,
 } from "../src/game/presentation";
-import { PRESETS } from "../src/presets";
 
 const badgesFor = (topology: Parameters<typeof evaluate>[0]) => {
   const evaluation = evaluate(topology, DEFAULT_PRICES);
@@ -99,12 +98,6 @@ describe("nearestCrossover", () => {
 });
 
 describe("achievements", () => {
-  it("unlocks Free rider with an arbiter", () => {
-    const arbiter = PRESETS.find((preset) => preset.id === "rs-arbiter")?.topology;
-    expect(badgesFor(arbiter!)["free-rider"]).toBe(true);
-    expect(badgesFor(replicaSet(3, 4, 16))["free-rider"]).toBe(false);
-  });
-
   it("unlocks Big iron only when per-node wins on a 128 GB+ node", () => {
     expect(badgesFor(replicaSet(3, 4, 192))["big-iron"]).toBe(true);
     expect(badgesFor(replicaSet(3, 4, 16))["big-iron"]).toBe(false);
@@ -126,27 +119,5 @@ describe("achievements", () => {
   it("gives no choice-based badges when Kubernetes forces the pool", () => {
     const k8s = setHosting(replicaSet(4, 4, 16), "k8s");
     expect(badgesFor(k8s)["sweet-spot"]).toBe(false);
-  });
-});
-
-describe("toggleArbiter", () => {
-  it("turns a secondary into an arbiter and back", () => {
-    const rs = replicaSet(3, 4, 16);
-    const toggled = toggleArbiter(rs, 3);
-    expect(toggled.members[2]?.role).toBe("arbiter");
-    expect(toggleArbiter(toggled, 3).members[2]?.role).toBe("secondary");
-  });
-
-  it("never removes the last data-bearing member", () => {
-    const lone: ReturnType<typeof replicaSet> = {
-      ...replicaSet(2, 4, 16),
-      members: [makeMember(1, "primary", 4, 16), makeMember(2, "arbiter", 2, 8)],
-    };
-    expect(toggleArbiter(lone, 1)).toBe(lone);
-  });
-
-  it("does nothing on a single node", () => {
-    const single = singleNode(4, 16);
-    expect(toggleArbiter(single, 1)).toBe(single);
   });
 });

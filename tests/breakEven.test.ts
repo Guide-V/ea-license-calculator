@@ -60,7 +60,6 @@ describe("golden path: presets", () => {
     "rs-small": "ramPool",
     "rs-large": "perNode",
     "rs-nonprod": "perNode",
-    "rs-arbiter": "perNode",
     "k8s-3pods": "ramPool",
   };
 

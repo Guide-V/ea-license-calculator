@@ -57,10 +57,6 @@ describe("per-node licensing with non-prod", () => {
     expect(perNodeCost(topology, DEFAULT_PRICES)).toMatchObject({ licenses: 2, nonProdLicenses: 2, cost: 100 });
   });
 
-  it("a non-prod arbiter is still free", () => {
-    const topology = withNonProd(updateMember(replicaSet(3, 4, 64), 3, { role: "arbiter" }), [3]);
-    expect(perNodeCost(topology, DEFAULT_PRICES)).toMatchObject({ licenses: 2, cost: 200 });
-  });
 });
 
 describe("RAM pool treats every node the same", () => {

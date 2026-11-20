@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { layoutWorkers } from "../calc/k8s";
-import { isDataBearing, isNonProd } from "../calc/members";
+import { isNonProd } from "../calc/members";
 import { licensesForNode } from "../calc/perNode";
 import { MAX_MEMBERS, NODE_RAM_CAP_GB, NONPROD_PRICE_FACTOR } from "../calc/rules";
-import { addMember, removeMember, toggleArbiter, toggleEnv } from "../calc/topology";
+import { addMember, removeMember, toggleEnv } from "../calc/topology";
 import type { Member, Role, Topology } from "../calc/types";
 import { plural } from "../ui/format";
 
@@ -12,7 +12,6 @@ const ROLE_LABEL: Record<Role, string> = {
   secondary: "Secondary",
   hidden: "Hidden",
   delayed: "Delayed",
-  arbiter: "Arbiter",
 };
 
 const spring = { type: "spring", stiffness: 220, damping: 28 } as const;
@@ -27,13 +26,13 @@ type ActionsProps = {
 };
 
 /**
- * Tap actions for one member: toggle non-prod, toggle arbiter, drop.
+ * Tap actions for one member: toggle non-prod, drop.
  * The first member is the anchor: it can switch environment but never moves.
  * Environment only matters per-node (VMs), so Kubernetes pods hide it.
  */
 function Actions({ topology, member, index, onChange }: ActionsProps) {
   const anchor = topology.kind === "single" || index === 0;
-  const showEnv = member.role !== "arbiter" && topology.hosting === "vm";
+  const showEnv = topology.hosting === "vm";
   if (anchor && !showEnv) return null;
   return (
     <div className="node-actions no-print">
@@ -49,24 +48,14 @@ function Actions({ topology, member, index, onChange }: ActionsProps) {
         </button>
       )}
       {!anchor && (
-        <>
-          <button
-            type="button"
-            className="mini"
-            aria-pressed={member.role === "arbiter"}
-            onClick={() => onChange(toggleArbiter(topology, member.id))}
-          >
-            Arbiter
-          </button>
-          <button
-            type="button"
-            className="mini mini-x"
-            aria-label={`Remove ${ROLE_LABEL[member.role]} member ${index + 1}`}
-            onClick={() => onChange(removeMember(topology, member.id))}
-          >
-            x
-          </button>
-        </>
+        <button
+          type="button"
+          className="mini mini-x"
+          aria-label={`Remove ${ROLE_LABEL[member.role]} member ${index + 1}`}
+          onClick={() => onChange(removeMember(topology, member.id))}
+        >
+          x
+        </button>
       )}
     </div>
   );
@@ -99,20 +88,19 @@ function AddGhost({ topology, onChange, label, nonProd = false }: AddGhostProps)
 type VmBoxProps = EditProps & { readonly topology: Topology; readonly member: Member; readonly index: number };
 
 function VmBox({ topology, member, index, onChange }: VmBoxProps) {
-  const billed = isDataBearing(member);
   const licenses = licensesForNode(member.ramGB);
   const capacity = licenses * NODE_RAM_CAP_GB;
-  const nonProd = billed && isNonProd(member);
-  const tag = !billed ? "Free" : nonProd ? `${plural(licenses, "license")} x ${NONPROD_PRICE_FACTOR}` : plural(licenses, "license");
+  const nonProd = isNonProd(member);
+  const tag = nonProd ? `${plural(licenses, "license")} x ${NONPROD_PRICE_FACTOR}` : plural(licenses, "license");
   return (
     <motion.li
       layout
       initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: billed ? 1 : 0.75, scale: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
       transition={spring}
-      className={!billed ? "vm vm-free" : nonProd ? "vm vm-billed vm-nonprod" : "vm vm-billed"}
-      aria-label={`${ROLE_LABEL[member.role]} VM, ${member.ramGB} GB, ${billed ? `${nonProd ? "non-prod, " : ""}${plural(licenses, "license")}` : "not counted"}`}
+      className={nonProd ? "vm vm-billed vm-nonprod" : "vm vm-billed"}
+      aria-label={`${ROLE_LABEL[member.role]} VM, ${member.ramGB} GB, ${nonProd ? "non-prod, " : ""}${plural(licenses, "license")}`}
     >
       <div className="vm-head">
         <span className="vm-role">{ROLE_LABEL[member.role]}</span>
@@ -125,10 +113,10 @@ function VmBox({ topology, member, index, onChange }: VmBoxProps) {
         <motion.div
           className="ram-fill"
           initial={false}
-          animate={{ width: `${billed ? Math.min(100, (member.ramGB / capacity) * 100) : 100}%` }}
+          animate={{ width: `${Math.min(100, (member.ramGB / capacity) * 100)}%` }}
           transition={spring}
         />
-        {billed && licenses > 1 && (
+        {licenses > 1 && (
           <div className="ram-notches">
             {Array.from({ length: licenses - 1 }, (_, i) => (
               <span key={i} style={{ left: `${((i + 1) / licenses) * 100}%` }} />
@@ -176,7 +164,7 @@ function K8sDiagram({ topology, onChange }: { readonly topology: Topology } & Ed
                   key={pod.id}
                   layout
                   transition={spring}
-                  className={isDataBearing(pod) ? "seg-pod seg-counted" : "seg-pod seg-free"}
+                  className="seg-pod seg-counted"
                   style={{ width: `${(pod.ramGB / total) * 100}%` }}
                   title={`${ROLE_LABEL[pod.role]} pod, limit ${pod.ramGB} GB`}
                 />
@@ -187,13 +175,13 @@ function K8sDiagram({ topology, onChange }: { readonly topology: Topology } & Ed
             </div>
             <ul className="pod-list">
               {worker.pods.map((pod) => (
-                <li key={pod.id} className={isDataBearing(pod) ? "pod pod-counted" : "pod pod-free"}>
+                <li key={pod.id} className="pod pod-counted">
                   <span>
                     {ROLE_LABEL[pod.role]}
                     <small> {pod.ramGB} GB</small>
                   </span>
                   <span className="pod-right">
-                    <span className="vm-tag">{isDataBearing(pod) ? "counts" : "Free"}</span>
+                    <span className="vm-tag">counts</span>
                     {onChange && <Actions topology={topology} member={pod} index={indexOf(pod)} onChange={onChange} />}
                   </span>
                 </li>

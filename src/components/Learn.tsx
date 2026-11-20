@@ -7,7 +7,7 @@ type Tab = "how" | "versus";
 const TILES = [
   { title: "Per-node", short: "1 license per data node", more: `Covers up to ${NODE_RAM_CAP_GB} GB RAM. 384 GB needs 2. Non-prod nodes cost half.` },
   { title: "RAM pool", short: "Buy GB, not nodes", more: `One license covers ${POOL_LICENSE_GB} GB of combined RAM, over any number of nodes. Prod and non-prod RAM count the same.` },
-  { title: "Free", short: "Arbiters cost nothing", more: "Config servers too. Only data-bearing nodes count." },
+  { title: "Non-prod", short: "Half price per-node", more: "Same 256 GB cap per license. The pool counts non-prod RAM like prod." },
   { title: "Kubernetes", short: "Pool only", more: "Counts pod memory limits, not worker RAM." },
 ] as const;
 

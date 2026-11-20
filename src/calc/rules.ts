@@ -38,7 +38,7 @@ export const DEFAULT_K8S: K8sSettings = {
 export const SOURCES = [
   {
     title: "MongoDB Enterprise Advanced pricing guidance",
-    note: "Per-node rule, pool license, free arbiters and config servers, containers are pool-only.",
+    note: "Per-node rule, pool license, non-prod pricing, containers are pool-only.",
   },
   {
     title: "MongoDB Enterprise Advanced container licensing guidance",

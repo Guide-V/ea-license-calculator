@@ -36,20 +36,10 @@ describe("topology helpers are immutable", () => {
     expect(rs.members[1]?.ramGB).toBe(1024);
   });
 
-  it("updateMember keeps at least one data-bearing member", () => {
-    const rs = replicaSet(3, 4, 16);
-    const onlyPrimary = updateMember(updateMember(rs, 2, { role: "arbiter" }), 3, { role: "arbiter" });
-    expect(onlyPrimary.members.map((member) => member.role)).toEqual(["primary", "arbiter", "arbiter"]);
-    expect(updateMember(onlyPrimary, 1, { role: "arbiter" })).toBe(onlyPrimary);
-    expect(updateMember(onlyPrimary, 1, { role: "arbiter", ramGB: 512 })).toBe(onlyPrimary);
-    expect(updateMember(onlyPrimary, 1, { role: "hidden" }).members[0]?.role).toBe("hidden");
-    expect(updateMember(onlyPrimary, 1, { ramGB: 32 }).members[0]).toMatchObject({ role: "primary", ramGB: 32 });
-  });
-
-  it("updateMember can make a member an arbiter while another data-bearing member remains", () => {
-    const rs = updateMember(replicaSet(2, 4, 16), 1, { role: "arbiter" });
-    expect(rs.members.map((member) => member.role)).toEqual(["arbiter", "secondary"]);
-    expect(updateMember(singleNode(4, 16), 1, { role: "arbiter" })).toEqual(singleNode(4, 16));
+  it("updateMember changes the role and keeps every member", () => {
+    const rs = updateMember(replicaSet(3, 4, 16), 2, { role: "hidden" });
+    expect(rs.members.map((member) => member.role)).toEqual(["primary", "hidden", "secondary"]);
+    expect(updateMember(rs, 1, { ramGB: 32 }).members[0]).toMatchObject({ role: "primary", ramGB: 32 });
   });
 
   it("member slider uses MAX_MEMBERS and does not delete members by echoing a clamped thumb", () => {

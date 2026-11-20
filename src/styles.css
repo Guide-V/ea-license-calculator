@@ -431,10 +431,6 @@ input[type="number"] {
   width: 4.5rem;
 }
 
-.member-free {
-  opacity: 0.7;
-}
-
 .member-index {
   width: 2rem;
   color: var(--ink-2);
@@ -522,11 +518,6 @@ input[type="number"] {
   color: var(--spring);
 }
 
-.vm-free {
-  border: 2px dashed #5c6c75;
-  opacity: 0.7;
-}
-
 .vm-head {
   display: flex;
   justify-content: space-between;
@@ -566,10 +557,6 @@ input[type="number"] {
 .ram-fill {
   height: 100%;
   background: var(--spring);
-}
-
-.vm-free .ram-fill {
-  background: #5c6c75;
 }
 
 .ram-notches span {
@@ -661,10 +648,6 @@ input[type="number"] {
   outline-offset: -2px;
 }
 
-.seg-free {
-  background: #5c6c75;
-}
-
 .seg-rest {
   background: repeating-linear-gradient(45deg, #5c6c75 0 3px, transparent 3px 7px);
 }
@@ -694,10 +677,6 @@ input[type="number"] {
 .pod-counted .vm-tag {
   color: var(--chartreuse);
   font-weight: 700;
-}
-
-.pod-free {
-  opacity: 0.7;
 }
 
 .worker-note {

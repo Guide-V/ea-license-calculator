@@ -1,4 +1,4 @@
-export type Role = "primary" | "secondary" | "hidden" | "delayed" | "arbiter";
+export type Role = "primary" | "secondary" | "hidden" | "delayed";
 
 /** Non-prod members cost half under per-node licensing. The RAM pool treats them like prod. */
 export type Environment = "prod" | "nonprod";

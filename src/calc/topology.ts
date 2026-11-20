@@ -1,4 +1,3 @@
-import { isDataBearing } from "./members";
 import { DEFAULT_K8S, MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "./rules";
 import type { Environment, Hosting, Member, Role, Topology, TopologyKind } from "./types";
 
@@ -50,7 +49,7 @@ export const setK8s = (topology: Topology, patch: Partial<Topology["k8s"]>): Top
 export const setKind = (topology: Topology, kind: TopologyKind): Topology => {
   if (kind === topology.kind) return topology;
   if (kind === "single") {
-    const first = topology.members.find(isDataBearing) ?? topology.members[0];
+    const first = topology.members[0];
     return { ...topology, kind, members: first ? [{ ...first, role: "primary" }] : [] };
   }
   const base = topology.members[0] ?? makeMember(1, "primary", 4, 16);
@@ -62,7 +61,7 @@ export const setKind = (topology: Topology, kind: TopologyKind): Topology => {
 
 export const addMember = (topology: Topology, role: Role = "secondary", env: Environment = "prod"): Topology => {
   if (topology.kind === "single" || topology.members.length >= MAX_MEMBERS) return topology;
-  const template = topology.members.find(isDataBearing) ?? topology.members[0];
+  const template = topology.members[0];
   const member = makeMember(nextId(topology.members), role, template?.vcpu ?? 4, template?.ramGB ?? 16, env);
   return { ...topology, members: [...topology.members, member] };
 };
@@ -72,8 +71,7 @@ export const setMemberCount = (topology: Topology, count: number): Topology => {
   if (topology.kind === "single") return topology;
   const target = clamp(Math.round(count), 1, MAX_MEMBERS);
   if (target <= topology.members.length) {
-    const kept = topology.members.slice(0, target);
-    return kept.some(isDataBearing) ? { ...topology, members: kept } : topology;
+    return { ...topology, members: topology.members.slice(0, target) };
   }
   return Array.from({ length: target - topology.members.length }).reduce<Topology>(
     (acc) => addMember(acc),
@@ -95,17 +93,9 @@ export const setMemberCountFromSlider = (topology: Topology, next: number): Topo
   return setMemberCount(topology, requested);
 };
 
-/** Arbiter <-> secondary. Never turns the last data-bearing member into an arbiter. */
-export const toggleArbiter = (topology: Topology, id: number): Topology => {
-  const target = topology.members.find((member) => member.id === id);
-  if (!target || topology.kind === "single") return topology;
-  return updateMember(topology, id, { role: target.role === "arbiter" ? "secondary" : "arbiter" });
-};
-
 export const removeMember = (topology: Topology, id: number): Topology => {
   const members = topology.members.filter((member) => member.id !== id);
-  const hasData = members.some(isDataBearing);
-  return topology.kind === "single" || !hasData ? topology : { ...topology, members };
+  return topology.kind === "single" || members.length === 0 ? topology : { ...topology, members };
 };
 
 export const updateMember = (
@@ -116,11 +106,6 @@ export const updateMember = (
   const current = topology.members.find((member) => member.id === id);
   if (!current) return topology;
   const role = patch.role ?? current.role;
-  const removingLastData =
-    role === "arbiter" &&
-    isDataBearing(current) &&
-    !topology.members.some((member) => member.id !== id && isDataBearing(member));
-  if (removingLastData) return topology;
   return {
     ...topology,
     members: topology.members.map((member) =>
@@ -142,7 +127,7 @@ export const setAllSizes = (
   ),
 });
 
-/** Prod <-> non-prod. Arbiters are free, so their environment never matters. */
+/** Prod <-> non-prod. */
 export const toggleEnv = (topology: Topology, id: number): Topology => {
   const target = topology.members.find((member) => member.id === id);
   return target ? updateMember(topology, id, { env: target.env === "prod" ? "nonprod" : "prod" }) : topology;

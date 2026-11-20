@@ -9,17 +9,6 @@ export type Preset = {
   readonly topology: Topology;
 };
 
-const withArbiter: Topology = {
-  kind: "replicaSet",
-  hosting: "vm",
-  k8s: DEFAULT_K8S,
-  members: [
-    makeMember(1, "primary", 8, 64),
-    makeMember(2, "secondary", 8, 64),
-    makeMember(3, "arbiter", 2, 8),
-  ],
-};
-
 const withNonProd: Topology = {
   kind: "replicaSet",
   hosting: "vm",
@@ -61,12 +50,6 @@ export const PRESETS: readonly Preset[] = [
     label: "3 prod + 2 non-prod, 64 GB",
     blurb: "Non-prod nodes are half price per-node, but full RAM in the pool.",
     topology: withNonProd,
-  },
-  {
-    id: "rs-arbiter",
-    label: "2 data nodes + arbiter",
-    blurb: "The arbiter is free under both models.",
-    topology: withArbiter,
   },
   {
     id: "k8s-3pods",

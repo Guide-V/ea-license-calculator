@@ -5,13 +5,9 @@ import { replicaSet } from "../src/calc/topology";
 
 /** Mirrors worked examples from the EA Pricing Guide, using placeholder prices. */
 describe("guide examples", () => {
-  it("example 1: two 128 GB data nodes plus an arbiter prefers per-node", () => {
-    const topology = {
-      ...replicaSet(3, 4, 128),
-      members: replicaSet(3, 4, 128).members.map((m, i) => (i === 2 ? { ...m, role: "arbiter" as const } : m)),
-    };
-    const result = recommend(evaluate(topology, DEFAULT_PRICES));
-    expect(result.winner).toBe("perNode");
+  it("example 1: two 128 GB data nodes prefer per-node", () => {
+    const topology = replicaSet(2, 4, 128);
+    expect(recommend(evaluate(topology, DEFAULT_PRICES)).winner).toBe("perNode");
     expect(evaluate(topology, DEFAULT_PRICES).perNode).toMatchObject({ licenses: 2 });
   });
 

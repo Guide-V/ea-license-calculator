@@ -25,18 +25,6 @@ describe("perNodeCost", () => {
     expect(result).toMatchObject({ available: true, licenses: 3, cost: 300 });
   });
 
-  it("does not charge arbiters", () => {
-    const topology: Topology = {
-      ...replicaSet(2, 4, 64),
-      members: [
-        makeMember(1, "primary", 4, 64),
-        makeMember(2, "secondary", 4, 64),
-        makeMember(3, "arbiter", 2, 8),
-      ],
-    };
-    expect(perNodeCost(topology, DEFAULT_PRICES)).toMatchObject({ licenses: 2 });
-  });
-
   it("charges hidden and delayed members", () => {
     const topology: Topology = {
       ...replicaSet(1, 4, 32),

@@ -56,7 +56,6 @@ export function PrintSummary({ topology, prices, view }: Props) {
             <th>Environment</th>
             <th>vCPU</th>
             <th>{view === "k8s" ? "Memory limit (GB)" : "RAM (GB)"}</th>
-            <th>Counted</th>
           </tr>
         </thead>
         <tbody>
@@ -64,10 +63,9 @@ export function PrintSummary({ topology, prices, view }: Props) {
             <tr key={member.id}>
               <td>{index + 1}</td>
               <td>{member.role}</td>
-              <td>{member.role === "arbiter" ? "n/a" : member.env === "nonprod" ? "Non-prod" : "Prod"}</td>
+              <td>{member.env === "nonprod" ? "Non-prod" : "Prod"}</td>
               <td>{member.vcpu}</td>
               <td>{member.ramGB}</td>
-              <td>{member.role === "arbiter" ? "No (free)" : "Yes"}</td>
             </tr>
           ))}
         </tbody>

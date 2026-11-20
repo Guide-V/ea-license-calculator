@@ -1,4 +1,3 @@
-import { isDataBearing } from "../calc/members";
 import { MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "../calc/rules";
 import {
   addMember,
@@ -25,7 +24,6 @@ const ROLES: readonly { readonly value: Role; readonly label: string }[] = [
   { value: "secondary", label: "Secondary" },
   { value: "hidden", label: "Hidden" },
   { value: "delayed", label: "Delayed" },
-  { value: "arbiter", label: "Arbiter (free)" },
 ];
 
 const ENVS: readonly { readonly value: Environment; readonly label: string }[] = [
@@ -40,8 +38,7 @@ const average = (values: readonly number[]): number =>
 
 export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
   const isReplicaSet = topology.kind === "replicaSet";
-  const dataMembers = topology.members.filter(isDataBearing);
-  const avgRam = average(dataMembers.map((member) => member.ramGB));
+  const avgRam = average(topology.members.map((member) => member.ramGB));
   const ramLabel = showK8s ? "Pod memory limit" : "RAM";
   const count = topology.members.length;
 
@@ -108,7 +105,7 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
         id="all-vcpu"
         label="vCPU (no license impact)"
         unit="vCPU"
-        value={average(dataMembers.map((member) => member.vcpu))}
+        value={average(topology.members.map((member) => member.vcpu))}
         min={1}
         max={MAX_VCPU}
         onChange={(vcpu) => onChange(setAllSizes(topology, { vcpu }))}
@@ -155,26 +152,22 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
           <summary>Fine-tune each member</summary>
           <ul className="member-list">
             {topology.members.map((member, index) => (
-              <li key={member.id} className={isDataBearing(member) ? "member-row" : "member-row member-free"}>
+              <li key={member.id} className="member-row">
                 <span className="member-index">#{index + 1}</span>
                 <select
                   aria-label={`Role of member ${index + 1}`}
                   value={member.role}
                   onChange={(event) => onChange(updateMember(topology, member.id, { role: event.target.value as Role }))}
                 >
-                  {ROLES.map((role) => {
-                    const lastDataBearing = role.value === "arbiter" && isDataBearing(member) && dataMembers.length === 1;
-                    return (
-                      <option key={role.value} value={role.value} disabled={lastDataBearing}>
-                        {role.label}
-                      </option>
-                    );
-                  })}
+                  {ROLES.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
                 </select>
                 <select
                   aria-label={`Environment of member ${index + 1}`}
                   value={member.env}
-                  disabled={!isDataBearing(member)}
                   onChange={(event) => onChange(updateMember(topology, member.id, { env: event.target.value as Environment }))}
                 >
                   {ENVS.map((env) => (
@@ -220,9 +213,6 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
             </button>
             <button type="button" className="btn" disabled={count >= MAX_MEMBERS} onClick={() => onChange(addMember(topology, "secondary", "nonprod"))}>
               Add non-prod member
-            </button>
-            <button type="button" className="btn" disabled={count >= MAX_MEMBERS} onClick={() => onChange(addMember(topology, "arbiter"))}>
-              Add arbiter
             </button>
           </div>
         </details>

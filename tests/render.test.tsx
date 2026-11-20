@@ -32,14 +32,13 @@ describe("render smoke tests", () => {
     expect(html).not.toContain("Licensing Clarification");
   });
 
-  it("renders the VM diagram with free arbiters and tap controls", () => {
-    const html = renderToStaticMarkup(<LicenseBoundaryDiagram topology={preset("rs-arbiter").topology} onChange={noop} />);
-    expect(html).toContain("Free");
+  it("renders the VM diagram with tap controls and no arbiter option", () => {
+    const html = renderToStaticMarkup(<LicenseBoundaryDiagram topology={preset("rs-small").topology} onChange={noop} />);
     expect(html).toContain("1 license");
     expect(html).toContain("Add node");
     expect(html).toContain("Add node (non-prod, 50%)");
     expect(html).toContain("Non-prod");
-    expect(html).toContain("Arbiter");
+    expect(html).not.toContain("Arbiter");
   });
 
   it("marks non-prod VMs and shows prod and non-prod licenses on the scoreboard", () => {
@@ -59,7 +58,7 @@ describe("render smoke tests", () => {
   });
 
   it("hides editing controls when the diagram is read-only", () => {
-    const html = renderToStaticMarkup(<LicenseBoundaryDiagram topology={preset("rs-arbiter").topology} />);
+    const html = renderToStaticMarkup(<LicenseBoundaryDiagram topology={preset("rs-small").topology} />);
     expect(html).not.toContain("Add node");
   });
 
@@ -102,17 +101,10 @@ describe("render smoke tests", () => {
     expect(html).toMatch(/aria-label="Members slider"[^>]*value="20"/);
   });
 
-  it("disables arbiter on the last data-bearing member", () => {
-    const base = preset("rs-small").topology;
-    const oneData = {
-      ...base,
-      members: base.members.map((member, index) => (index === 0 ? member : { ...member, role: "arbiter" as const })),
-    };
-    const html = renderToStaticMarkup(<TopologyBuilder topology={oneData} showK8s={false} onChange={noop} />);
-    const member = (n: number) => html.split(`aria-label="Role of member ${n}"`)[1]?.split("</select>")[0] ?? "";
-    expect(member(1)).toContain('value="arbiter" disabled=""');
-    expect(member(2)).not.toContain('value="arbiter" disabled=""');
-    expect(member(3)).not.toContain('value="arbiter" disabled=""');
+  it("offers no arbiter role or button in the builder", () => {
+    const html = renderToStaticMarkup(<TopologyBuilder topology={preset("rs-small").topology} showK8s={false} onChange={noop} />);
+    expect(html.toLowerCase()).not.toContain("arbiter");
+    expect(html).toContain("Add non-prod member");
   });
 });
 
@@ -150,8 +142,8 @@ describe("scoreboard", () => {
   });
 
   it("lists badges with locked and unlocked state in text", () => {
-    const html = renderToStaticMarkup(<Scoreboard topology={preset("rs-arbiter").topology} prices={DEFAULT_PRICES} />);
-    expect(html).toContain("Free rider");
+    const html = renderToStaticMarkup(<Scoreboard topology={preset("rs-large").topology} prices={DEFAULT_PRICES} />);
+    expect(html).not.toContain("Free rider");
     expect(html).toContain("(unlocked)");
     expect(html).toContain("(locked:");
   });
@@ -175,12 +167,8 @@ describe("chart", () => {
     };
     const mixedHtml = renderToStaticMarkup(<BreakEvenChart topology={mixed} prices={DEFAULT_PRICES} />);
     const evenHtml = renderToStaticMarkup(<BreakEvenChart topology={even} prices={DEFAULT_PRICES} />);
-    const arbiterOnly = renderToStaticMarkup(
-      <BreakEvenChart topology={preset("rs-arbiter").topology} prices={DEFAULT_PRICES} />,
-    );
     expect(mixedHtml).toContain("equal-size members");
     expect(mixedHtml).toContain("The dot shows the real cost.");
     expect(evenHtml).not.toContain("equal-size members");
-    expect(arbiterOnly).not.toContain("equal-size members");
   });
 });

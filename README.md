@@ -7,15 +7,15 @@ A static site that explains MongoDB Enterprise Advanced (EA) licensing and helps
 ## Features
 
 - Short, tap-to-expand explainer and a compact per-node versus RAM pool table.
-- Single node or replica set (1 to 50 members). Roles: primary, secondary, hidden, delayed, arbiter. Each data-bearing member is **prod** or **non-prod**.
+- Single node or replica set (1 to 50 members). Roles: primary, secondary, hidden, delayed. Every member is licensed and is **prod** or **non-prod**. Arbiters are intentionally not offered.
 - Build fast: quick RAM chips, node steppers, log-scale sliders, and per-member fine-tuning.
 - Hosting toggle: **VMs**, **Kubernetes**, or **side by side**.
 - **Scoreboard** (see "Game layer"): rolling cost, winner, savings, pinned baseline, battle bars, meters, badges.
-- **Interactive diagram**: tap *Non-prod* to switch a node to half price, *Arbiter* to toggle a free arbiter, `x` to drop a node, or a ghost card to add a prod or non-prod node.
+- **Interactive diagram**: tap *Non-prod* to switch a node to half price, `x` to drop a node, or a ghost card to add a prod or non-prod node.
   - VMs: the whole VM is the licensed unit, with a notch per 256 GB license.
   - Kubernetes: only each pod's memory limit counts toward the pool. Uncounted worker RAM is hatched.
 - **Break-even chart**: click or drag on it (or use the slider) to change RAM per node. Chips show who wins where, with a one-tap jump to the nearest break-even.
-- Six presets, editable placeholder prices, and **Export PDF** (browser print to PDF).
+- Five presets, editable placeholder prices, and **Export PDF** (browser print to PDF).
 
 ## Game layer
 
@@ -28,7 +28,7 @@ Feedback is game-like, but every number is deterministic and traceable to the in
 | Reward | Particles and a score pop fire only when a change **lowers** cost. A higher cost gets a plain "above baseline" chip. |
 | Deal meter | Savings of the winning model: Even, Solid, Hot, Blazing, Max. Locked on Kubernetes (pool only). |
 | Pool fill meter | How full the purchased pool licenses are: Idle, Roomy, Good, Great, Packed. Shows free GB. |
-| Badges | Sweet spot, Big iron, Packed pool, Free rider, Kube cutter. Unlocked by the current setup only, not by history. |
+| Badges | Sweet spot, Big iron, Packed pool, Kube cutter. Unlocked by the current setup only, not by history. |
 | Flip chip | A short message when the cheaper model changes. |
 
 Accessibility: reduced motion skips counting, particles and pops. Meters spell out the level in text. One polite status line announces the final result after a short pause. Animations are hidden in the PDF.
@@ -42,7 +42,6 @@ Source: internal EA Pricing Guide, updated 2026-11-04 (see `spec.md`).
 | Per-node | One license per data-bearing `mongod`, covering up to 256 GB RAM. `ceil(RAM / 256)` licenses per node. |
 | RAM pool | One license covers 256 GB of combined data-bearing RAM, spread over any number of nodes. Buy enough licenses for the total (257 GB needs 2). |
 | Non-prod | A non-prod node license costs 50% of a prod node license (same 256 GB cap, so a 384 GB non-prod node needs 2 half-price licenses). The RAM pool gives prod and non-prod the same entitlement: their RAM is added together at full weight. |
-| Free | Arbiters. Config servers and `mongos` are not data-bearing. |
 | Kubernetes | Per-node is not available. The pool counts each data-bearing container's memory limit, not worker RAM. |
 | vCPU | Shown only. It does not affect license counts. |
 
