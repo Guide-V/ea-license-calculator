@@ -6,8 +6,10 @@ import {
   removeMember,
   replicaSet,
   setAllSizes,
+  setClusters,
   setKind,
   setMemberCountFromSlider,
+  setNonProdClusters,
   singleNode,
   updateMember,
 } from "../src/calc/topology";
@@ -75,5 +77,18 @@ describe("topology helpers are immutable", () => {
   it("setAllSizes updates every member", () => {
     const rs = setAllSizes(replicaSet(3, 4, 16), { ramGB: 64 });
     expect(rs.members.every((member) => member.ramGB === 64)).toBe(true);
+  });
+
+  it("setClusters and setNonProdClusters stay immutable and keep at least one deployment", () => {
+    const rs = replicaSet(3, 4, 16);
+    const grown = setClusters(rs, 4);
+    expect(rs.clusters).toBe(1);
+    expect(grown.clusters).toBe(4);
+    expect(setClusters(rs, 0).clusters).toBe(1);
+
+    const withNonProd = setNonProdClusters(rs, 2);
+    expect(withNonProd.nonProdClusters).toBe(2);
+    expect(setClusters(withNonProd, 0)).toMatchObject({ clusters: 0, nonProdClusters: 2 });
+    expect(setNonProdClusters(setClusters(withNonProd, 0), 0).nonProdClusters).toBe(1);
   });
 });

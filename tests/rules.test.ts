@@ -15,13 +15,18 @@ describe("guide examples", () => {
     expect(evaluate(replicaSet(2, 8, 384), DEFAULT_PRICES).perNode).toMatchObject({ licenses: 4 });
   });
 
-  it("example 5: 32 + 16 + 16 GB fits one 256 GB pool license and the pool wins", () => {
+  it("example 5: 32 + 16 + 16 GB fits one 256 GB pool license; pooling 4 clusters makes the pool win", () => {
     const topology = replicaSet(3, 4, 16);
     const members = [32, 16, 16].map((ramGB, i) => ({ ...topology.members[i]!, ramGB }));
-    const small = { ...topology, members };
-    const evaluation = evaluate(small, DEFAULT_PRICES);
-    expect(evaluation.pool).toMatchObject({ licenses: 1, cost: 250 });
-    expect(recommend(evaluation).winner).toBe("ramPool");
+    const singleCluster = { ...topology, members };
+    const singleEval = evaluate(singleCluster, DEFAULT_PRICES);
+    expect(singleEval.pool).toMatchObject({ totalGB: 64, licenses: 1, cost: 640 });
+    expect(recommend(singleEval).winner).toBe("perNode");
+
+    const fleet = { ...singleCluster, clusters: 4 };
+    const fleetEval = evaluate(fleet, DEFAULT_PRICES);
+    expect(fleetEval.pool).toMatchObject({ totalGB: 256, licenses: 1, cost: 640 });
+    expect(recommend(fleetEval).winner).toBe("ramPool");
   });
 });
 

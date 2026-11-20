@@ -1,9 +1,8 @@
-import { billableMembers } from "./members";
+import { totalDataRamGB } from "./members";
 import type { Member, Topology } from "./types";
 
-/** On Kubernetes the pool counts pod memory limits, not worker RAM. */
-export const poolRamFromPods = (topology: Topology): number =>
-  billableMembers(topology).reduce((sum, pod) => sum + pod.ramGB, 0);
+/** On Kubernetes the pool counts pod memory limits across all deployments, not worker RAM. */
+export const poolRamFromPods = (topology: Topology): number => totalDataRamGB(topology);
 
 export type Worker = {
   readonly index: number;

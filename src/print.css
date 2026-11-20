@@ -96,6 +96,24 @@
     font-size: 16pt;
   }
 
+  .print-summary-box {
+    border: 1.5px solid #023430;
+    border-left: 5px solid #b1ff05;
+    background: #f4f7f6;
+    padding: 3mm 4mm;
+    margin-bottom: 5mm;
+    break-inside: avoid;
+  }
+
+  .print-summary-box p {
+    margin: 0 0 2mm;
+  }
+
+  .print-summary-box p:last-child,
+  .print-summary-box ul {
+    margin-bottom: 0;
+  }
+
   .report-inputs table {
     width: 100%;
     border-collapse: collapse;

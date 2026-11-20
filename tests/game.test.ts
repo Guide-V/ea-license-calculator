@@ -7,6 +7,7 @@ import {
   FILL_LEVELS,
   SAVINGS_LEVELS,
   achievements,
+  extraDeploymentsInPool,
   getDelta,
   getIntensity,
   nearestCrossover,
@@ -85,15 +86,21 @@ describe("headroom and fill", () => {
     expect(perNodeHeadroomGB(replicaSet(3, 4, 192))).toBe(64);
     expect(perNodeHeadroomGB(singleNode(4, 300))).toBe(212);
   });
+  it("reports how many extra identical deployments fit in pool headroom", () => {
+    const fleet = evaluate(replicaSet(3, 4, 16, "vm", 4), DEFAULT_PRICES);
+    expect(extraDeploymentsInPool(fleet)).toBe(1);
+    const single = evaluate(replicaSet(3, 4, 16, "vm", 1), DEFAULT_PRICES);
+    expect(extraDeploymentsInPool(single)).toBe(4);
+  });
 });
 
 describe("nearestCrossover", () => {
-  const points = breakEvenPoints(costCurve(3, DEFAULT_PRICES, { maxGB: 128 }));
+  const points = breakEvenPoints(costCurve(12, DEFAULT_PRICES, { maxGB: 128 }));
   it("returns null when there is none", () => {
     expect(nearestCrossover(16, [])).toBeNull();
   });
   it("finds the closest crossover", () => {
-    expect(nearestCrossover(5, points)?.ramGB).toBe(86);
+    expect(nearestCrossover(5, points)?.ramGB).toBe(22);
   });
 });
 
@@ -104,7 +111,7 @@ describe("achievements", () => {
   });
 
   it("unlocks Packed pool and Sweet spot when the pool license is 90%+ full and the pool wins", () => {
-    const full = badgesFor(replicaSet(4, 4, 64));
+    const full = badgesFor(replicaSet(4, 4, 16, "vm", 4)); // 16 nodes x 16 GB = 256 GB
     expect(full.packed).toBe(true);
     expect(full["sweet-spot"]).toBe(true);
     expect(badgesFor(replicaSet(3, 4, 16)).packed).toBe(false);

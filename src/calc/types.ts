@@ -26,6 +26,16 @@ export type Topology = {
   readonly hosting: Hosting;
   readonly members: readonly Member[];
   readonly k8s: K8sSettings;
+  /** Number of prod deployments of this shape (0..MAX_CLUSTERS; clusters + nonProdClusters >= 1). */
+  readonly clusters: number;
+  /** Number of separate non-prod deployments of this shape (half price per-node, full RAM in pool). */
+  readonly nonProdClusters: number;
+};
+
+export type PlanningSignals = {
+  readonly k8sPlanned: boolean;
+  readonly verticalGrowth: boolean;
+  readonly fleetSprawl: boolean;
 };
 
 export type Prices = {

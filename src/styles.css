@@ -1577,3 +1577,245 @@ input[type="number"] {
   touch-action: pan-y;
   user-select: none;
 }
+
+/* ===== SA clarity & estate additions ===== */
+.tile-static {
+  cursor: default;
+}
+
+.tile-static:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.presets-wrap {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.presets-wrap .presets {
+  margin: 0;
+}
+
+.preset-takeaway {
+  margin: 0.55rem 0 0;
+  padding: 0.5rem 0.85rem;
+  background: var(--panel);
+  border-left: 4px solid var(--evergreen);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+
+.estate-fields {
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  margin: 0.9rem 0 0.5rem;
+  padding: 0.35rem 0.85rem 0.65rem;
+  background: var(--off-white);
+}
+
+.estate-fields legend {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  padding: 0 0.35rem;
+  color: var(--slate);
+}
+
+.estate-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  align-items: center;
+}
+
+.stepper-compact {
+  margin: 0.35rem 0;
+}
+
+.step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.step-btn:disabled:hover {
+  background: var(--off-white);
+}
+
+.ratio-rule {
+  margin: 0.6rem 0 0.4rem;
+  padding: 0.55rem 0.75rem;
+  background: #edf5f1;
+  border-left: 4px solid var(--evergreen);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.88rem;
+  color: var(--slate);
+}
+
+.score-reason {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(2, 52, 48, 0.85);
+  border-left: 4px solid var(--chartreuse);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--off-white);
+}
+
+.cliff-alerts {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cliff {
+  font-size: 0.84rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(177, 255, 5, 0.1);
+  border: 1px solid rgba(177, 255, 5, 0.45);
+  color: #eef4f1;
+}
+
+.cliff-crossed {
+  background: rgba(176, 58, 0, 0.28);
+  border-color: #ff8c5a;
+}
+
+.diagram-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Strategic checklist */
+.strategy-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.check-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.check-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--off-white);
+  cursor: pointer;
+}
+
+.check-item:hover {
+  border-color: var(--slate);
+}
+
+.check-item input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--evergreen);
+  flex-shrink: 0;
+}
+
+.check-item span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.92rem;
+}
+
+.check-item small {
+  color: var(--ink-2);
+  font-size: 0.82rem;
+}
+
+.strategy-notes {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.strategy-note {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--evergreen);
+  background: #f3f7f5;
+}
+
+.note-pool {
+  border-left-color: var(--spring);
+}
+
+.note-node {
+  border-left-color: var(--slate);
+}
+
+.note-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.note-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--slate);
+  color: var(--chartreuse);
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+}
+
+.strategy-note p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.free-box {
+  border-top: 5px solid var(--evergreen);
+}
+
+.free-list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
+.free-list strong {
+  color: var(--slate);
+}
+
+@media (max-width: 900px) {
+  .strategy-grid {
+    grid-template-columns: 1fr;
+  }
+}

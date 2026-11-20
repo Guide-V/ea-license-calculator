@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
-import { evaluate, recommend, type Recommendation } from "../calc/evaluate";
-import { billableMembers } from "../calc/members";
+import { cliffAlerts, evaluate, recommend, type Evaluation, type Recommendation } from "../calc/evaluate";
+import { billableMembers, totalDeployments } from "../calc/members";
 import type { PerNodeResult } from "../calc/perNode";
 import type { PoolCover } from "../calc/ramPool";
 import { POOL_LICENSE_GB } from "../calc/rules";
@@ -9,6 +9,7 @@ import type { Model, Prices, Topology } from "../calc/types";
 import { useDebounced, useImprovementBurst, useWinnerFlip } from "../game/hooks";
 import {
   achievements,
+  extraDeploymentsInPool,
   FILL_LEVELS,
   getDelta,
   perNodeHeadroomGB,
@@ -49,13 +50,20 @@ const verdictText = (recommendation: Recommendation, fmt: (value: number) => str
       ? "Both models cost the same"
       : `${MODEL_LABEL(recommendation.winner)} wins, saves ${fmt(recommendation.savings)} (${recommendation.savingsPct.toFixed(0)}%)`;
 
-function Combo({ topology, pool }: { readonly topology: Topology; readonly pool: PoolCover }) {
+function Combo({ topology, evaluation }: { readonly topology: Topology; readonly evaluation: Evaluation }) {
   const nodes = billableMembers(topology);
+  const deployments = totalDeployments(topology);
   const sizes = new Set(nodes.map((node) => node.ramGB));
   const first = nodes[0];
   const uniform = sizes.size === 1 && first !== undefined;
   return (
     <div className="combo" aria-label="How the pool is counted">
+      {deployments > 1 && (
+        <>
+          <span className="chip">{plural(deployments, topology.kind === "single" ? "deployment" : "RS")}</span>
+          <span className="op">x</span>
+        </>
+      )}
       <span className="chip">{plural(nodes.length, "node")}</span>
       {uniform && (
         <>
@@ -64,9 +72,9 @@ function Combo({ topology, pool }: { readonly topology: Topology; readonly pool:
         </>
       )}
       <span className="op">=</span>
-      <span className="chip chip-strong">{gb(pool.totalGB)}</span>
+      <span className="chip chip-strong">{gb(evaluation.pool.totalGB)}</span>
       <span className="op">to</span>
-      <span className="chip chip-hero">{mixText(pool)}</span>
+      <span className="chip chip-hero">{mixText(evaluation.pool)}</span>
     </div>
   );
 }
@@ -111,6 +119,7 @@ function BattleBar({
 export function Scoreboard({ topology, prices, compact = false, baseline = null, onPin, onClearBaseline }: Props) {
   const evaluation = evaluate(topology, prices);
   const recommendation = recommend(evaluation);
+  const alerts = cliffAlerts(topology, evaluation);
   const { perNode, pool } = evaluation;
   const fmt = useCallback((value: number) => money(value, prices.currency), [prices.currency]);
 
@@ -129,9 +138,17 @@ export function Scoreboard({ topology, prices, compact = false, baseline = null,
 
   const fill = poolFillPct(pool);
   const headroom = poolHeadroomGB(pool);
+  const extraDeployments = extraDeploymentsInPool(evaluation);
   const badges = achievements(topology, evaluation, recommendation);
   const unlocked = badges.filter((badge) => badge.unlocked).length;
   const maxCost = Math.max(perNode.available ? perNode.cost : 0, pool.cost);
+
+  const poolDetail =
+    pool.coveredGB === 0
+      ? undefined
+      : `${gb(headroom)} free in the pool` +
+        (extraDeployments > 0 ? ` (fits ${plural(extraDeployments, "more deployment")} at $0)` : "") +
+        (perNode.available ? ` · ${gb(perNodeHeadroomGB(topology))} free per node` : "");
 
   return (
     <section className={compact ? "scoreboard scoreboard-compact" : "scoreboard"} aria-label="Scoreboard">
@@ -184,7 +201,19 @@ export function Scoreboard({ topology, prices, compact = false, baseline = null,
         </AnimatePresence>
       </div>
 
-      <Combo topology={topology} pool={pool} />
+      <p className="score-reason">{recommendation.reason}</p>
+
+      {alerts.length > 0 && (
+        <ul className="cliff-alerts" aria-label="256 GB step alerts">
+          {alerts.map((alert) => (
+            <li key={alert.id} className={alert.kind === "crossed" ? "cliff cliff-crossed" : "cliff"}>
+              {alert.message}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Combo topology={topology} evaluation={evaluation} />
 
       <div className="battles">
         <BattleBar
@@ -214,17 +243,7 @@ export function Scoreboard({ topology, prices, compact = false, baseline = null,
           levels={SAVINGS_LEVELS}
           disabledText={recommendation.forced ? "No choice on Kubernetes" : undefined}
         />
-        <Meter
-          label="Pool fill"
-          value={fill}
-          levels={FILL_LEVELS}
-          detail={
-            pool.coveredGB === 0
-              ? undefined
-              : `${gb(headroom)} free in the pool` +
-                (perNode.available ? ` · ${gb(perNodeHeadroomGB(topology))} free per node` : "")
-          }
-        />
+        <Meter label="Pool fill" value={fill} levels={FILL_LEVELS} detail={poolDetail} />
       </div>
 
       {!compact && (

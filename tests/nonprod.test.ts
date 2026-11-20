@@ -64,20 +64,20 @@ describe("RAM pool treats every node the same", () => {
     const allProd = replicaSet(5, 4, 64);
     const mixed = withNonProd(allProd, [4, 5]);
     expect(evaluate(mixed, DEFAULT_PRICES).pool).toEqual(evaluate(allProd, DEFAULT_PRICES).pool);
-    expect(evaluate(mixed, DEFAULT_PRICES).pool).toMatchObject({ totalGB: 320, licenses: 2, cost: 500 });
+    expect(evaluate(mixed, DEFAULT_PRICES).pool).toMatchObject({ totalGB: 320, licenses: 2, cost: 1280 });
   });
 
-  it("non-prod turns a prod-only tie into a per-node win", () => {
-    const allProd = replicaSet(5, 4, 64);
-    const mixed = withNonProd(allProd, [4, 5]);
-    expect(recommend(evaluate(allProd, DEFAULT_PRICES)).winner).toBe("tie");
-    expect(recommend(evaluate(mixed, DEFAULT_PRICES))).toMatchObject({ winner: "perNode", cost: 400, otherCost: 500 });
+  it("separate non-prod replica sets flip a pool win into a per-node win", () => {
+    const allProd = replicaSet(3, 8, 32, "vm", 5, 0);
+    const mixedEstate = replicaSet(3, 8, 32, "vm", 2, 3);
+    expect(recommend(evaluate(allProd, DEFAULT_PRICES))).toMatchObject({ winner: "ramPool", cost: 1280, otherCost: 1500 });
+    expect(recommend(evaluate(mixedEstate, DEFAULT_PRICES))).toMatchObject({ winner: "perNode", cost: 1050, otherCost: 1280 });
   });
 
   it("many non-prod nodes make per-node cheaper at sizes where the pool wins for prod", () => {
-    const prod = costCurve(3, DEFAULT_PRICES, { minGB: 85, maxGB: 85 })[0];
-    const nonProd = costCurve(3, DEFAULT_PRICES, { minGB: 85, maxGB: 85, nonProdCount: 3 })[0];
-    expect(prod).toMatchObject({ perNode: 300, ramPool: 250, winner: "ramPool" });
-    expect(nonProd).toMatchObject({ perNode: 150, ramPool: 250, winner: "perNode" });
+    const prod = costCurve(12, DEFAULT_PRICES, { minGB: 20, maxGB: 20 })[0];
+    const nonProd = costCurve(12, DEFAULT_PRICES, { minGB: 20, maxGB: 20, nonProdCount: 12 })[0];
+    expect(prod).toMatchObject({ perNode: 1200, ramPool: 640, winner: "ramPool" });
+    expect(nonProd).toMatchObject({ perNode: 600, ramPool: 640, winner: "perNode" });
   });
 });

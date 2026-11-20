@@ -1,15 +1,19 @@
-import { MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "../calc/rules";
+import { estateNodeCount, totalDeployments } from "../calc/members";
+import { MAX_CLUSTERS, MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "../calc/rules";
 import {
   addMember,
   removeMember,
   setAllSizes,
+  setClusters,
   setK8s,
   setKind,
   setMemberCount,
   setMemberCountFromSlider,
+  setNonProdClusters,
   updateMember,
 } from "../calc/topology";
 import type { Environment, Role, Topology } from "../calc/types";
+import { plural } from "../ui/format";
 import { Segmented } from "./Segmented";
 import { SizeControl } from "./SizeControl";
 
@@ -39,12 +43,15 @@ const average = (values: readonly number[]): number =>
 export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
   const isReplicaSet = topology.kind === "replicaSet";
   const avgRam = average(topology.members.map((member) => member.ramGB));
-  const ramLabel = showK8s ? "Pod memory limit" : "RAM";
+  const ramLabel = showK8s ? "Pod memory limit (not requests)" : "RAM";
   const count = topology.members.length;
+  const deployments = totalDeployments(topology);
+  const totalNodes = estateNodeCount(topology);
+  const unitName = isReplicaSet ? "replica set" : "single node";
 
   return (
     <section className="panel no-print" aria-labelledby="builder-title">
-      <h2 id="builder-title">Build</h2>
+      <h2 id="builder-title">Topology</h2>
 
       <Segmented<Topology["kind"]>
         label="Deployment type"
@@ -57,12 +64,12 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
       />
 
       {isReplicaSet && (
-        <div className="stepper" role="group" aria-label="Members">
+        <div className="stepper" role="group" aria-label="Members per deployment">
           <button type="button" className="step-btn" aria-label="Remove a member" onClick={() => onChange(setMemberCount(topology, count - 1))}>
             -
           </button>
           <span className="step-value">
-            <strong>{count}</strong> nodes
+            <strong>{count}</strong> nodes per set
           </span>
           <button type="button" className="step-btn" aria-label="Add a member" onClick={() => onChange(setMemberCount(topology, count + 1))}>
             +
@@ -77,6 +84,61 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
           />
         </div>
       )}
+
+      <fieldset className="estate-fields">
+        <legend>Environment count ({plural(deployments, unitName)}, {plural(totalNodes, "node")})</legend>
+        <div className="estate-row">
+          <div className="stepper stepper-compact" role="group" aria-label="Prod deployments">
+            <button
+              type="button"
+              className="step-btn"
+              aria-label="Fewer prod deployments"
+              disabled={topology.clusters <= (topology.nonProdClusters > 0 ? 0 : 1)}
+              onClick={() => onChange(setClusters(topology, topology.clusters - 1))}
+            >
+              -
+            </button>
+            <span className="step-value">
+              <strong>{topology.clusters}</strong> prod
+            </span>
+            <button
+              type="button"
+              className="step-btn"
+              aria-label="More prod deployments"
+              disabled={topology.clusters >= MAX_CLUSTERS}
+              onClick={() => onChange(setClusters(topology, topology.clusters + 1))}
+            >
+              +
+            </button>
+          </div>
+          <div className="stepper stepper-compact" role="group" aria-label="Non-prod deployments">
+            <button
+              type="button"
+              className="step-btn"
+              aria-label="Fewer non-prod deployments"
+              disabled={topology.nonProdClusters <= (topology.clusters > 0 ? 0 : 1)}
+              onClick={() => onChange(setNonProdClusters(topology, topology.nonProdClusters - 1))}
+            >
+              -
+            </button>
+            <span className="step-value">
+              <strong>{topology.nonProdClusters}</strong> non-prod
+            </span>
+            <button
+              type="button"
+              className="step-btn"
+              aria-label="More non-prod deployments"
+              disabled={topology.nonProdClusters >= MAX_CLUSTERS}
+              onClick={() => onChange(setNonProdClusters(topology, topology.nonProdClusters + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <p className="hint">
+          RAM pool shares 256 GB across all deployments. Separate non-prod deployments cost 50% per-node.
+        </p>
+      </fieldset>
 
       <div className="quick" role="group" aria-label={`Quick ${ramLabel}`}>
         {QUICK_RAM.map((ram) => (

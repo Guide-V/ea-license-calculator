@@ -58,6 +58,12 @@ export const poolFillPct = (pool: PoolCover): number =>
 /** RAM you could add to the pool at no extra cost. */
 export const poolHeadroomGB = (pool: PoolCover): number => Math.max(0, pool.coveredGB - pool.totalGB);
 
+/** How many additional identical deployments fit inside the current pool headroom at $0. */
+export const extraDeploymentsInPool = (evaluation: Evaluation): number =>
+  evaluation.singleClusterRamGB <= 0
+    ? 0
+    : Math.floor(poolHeadroomGB(evaluation.pool) / evaluation.singleClusterRamGB);
+
 /** Smallest room left under a node license's 256 GB cap, across data-bearing nodes. */
 export const perNodeHeadroomGB = (topology: Topology): number => {
   const rooms = billableMembers(topology).map(

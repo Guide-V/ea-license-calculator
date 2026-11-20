@@ -1,4 +1,4 @@
-import { DEFAULT_K8S, MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "./rules";
+import { DEFAULT_K8S, MAX_CLUSTERS, MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "./rules";
 import type { Environment, Hosting, Member, Role, Topology, TopologyKind } from "./types";
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -15,28 +15,60 @@ export const makeMember = (id: number, role: Role, vcpu: number, ramGB: number, 
   ramGB: clamp(Math.round(ramGB), MIN_RAM_GB, MAX_RAM_GB),
 });
 
-export const singleNode = (vcpu: number, ramGB: number, hosting: Hosting = "vm"): Topology => ({
-  kind: "single",
-  hosting,
-  members: [makeMember(1, "primary", vcpu, ramGB)],
-  k8s: DEFAULT_K8S,
-});
+export const singleNode = (
+  vcpu: number,
+  ramGB: number,
+  hosting: Hosting = "vm",
+  clusters = 1,
+  nonProdClusters = 0,
+): Topology => {
+  const prod = clamp(Math.round(clusters), 0, MAX_CLUSTERS);
+  const nonProd = clamp(Math.round(nonProdClusters), 0, MAX_CLUSTERS);
+  return {
+    kind: "single",
+    hosting,
+    members: [makeMember(1, "primary", vcpu, ramGB)],
+    k8s: DEFAULT_K8S,
+    clusters: prod + nonProd === 0 ? 1 : prod,
+    nonProdClusters: nonProd,
+  };
+};
 
 export const replicaSet = (
   size: number,
   vcpu: number,
   ramGB: number,
   hosting: Hosting = "vm",
-): Topology => ({
-  kind: "replicaSet",
-  hosting,
-  members: Array.from({ length: clamp(size, 1, MAX_MEMBERS) }, (_, i) =>
-    makeMember(i + 1, i === 0 ? "primary" : "secondary", vcpu, ramGB),
-  ),
-  k8s: DEFAULT_K8S,
-});
+  clusters = 1,
+  nonProdClusters = 0,
+): Topology => {
+  const prod = clamp(Math.round(clusters), 0, MAX_CLUSTERS);
+  const nonProd = clamp(Math.round(nonProdClusters), 0, MAX_CLUSTERS);
+  return {
+    kind: "replicaSet",
+    hosting,
+    members: Array.from({ length: clamp(size, 1, MAX_MEMBERS) }, (_, i) =>
+      makeMember(i + 1, i === 0 ? "primary" : "secondary", vcpu, ramGB),
+    ),
+    k8s: DEFAULT_K8S,
+    clusters: prod + nonProd === 0 ? 1 : prod,
+    nonProdClusters: nonProd,
+  };
+};
 
 export const setHosting = (topology: Topology, hosting: Hosting): Topology => ({ ...topology, hosting });
+
+/** Sets the count of prod deployments, keeping at least 1 total deployment in the estate. */
+export const setClusters = (topology: Topology, clusters: number): Topology => {
+  const minProd = topology.nonProdClusters > 0 ? 0 : 1;
+  return { ...topology, clusters: clamp(Math.round(clusters), minProd, MAX_CLUSTERS) };
+};
+
+/** Sets the count of separate non-prod deployments, keeping at least 1 total deployment in the estate. */
+export const setNonProdClusters = (topology: Topology, nonProdClusters: number): Topology => {
+  const minNonProd = topology.clusters > 0 ? 0 : 1;
+  return { ...topology, nonProdClusters: clamp(Math.round(nonProdClusters), minNonProd, MAX_CLUSTERS) };
+};
 
 export const setK8s = (topology: Topology, patch: Partial<Topology["k8s"]>): Topology => ({
   ...topology,

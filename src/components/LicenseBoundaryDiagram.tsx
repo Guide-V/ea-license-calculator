@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { layoutWorkers } from "../calc/k8s";
-import { isNonProd } from "../calc/members";
+import { estateNodeCount, isNonProd, totalDeployments } from "../calc/members";
 import { licensesForNode } from "../calc/perNode";
 import { MAX_MEMBERS, NODE_RAM_CAP_GB, NONPROD_PRICE_FACTOR } from "../calc/rules";
 import { addMember, removeMember, toggleEnv } from "../calc/topology";
@@ -198,13 +198,29 @@ function K8sDiagram({ topology, onChange }: { readonly topology: Topology } & Ed
   );
 }
 
+const estateBadge = (topology: Topology): string | null => {
+  const total = totalDeployments(topology);
+  if (total <= 1) return null;
+  const parts: string[] = [];
+  if (topology.clusters > 0) parts.push(`${topology.clusters} prod`);
+  if (topology.nonProdClusters > 0) parts.push(`${topology.nonProdClusters} non-prod`);
+  const unit = topology.kind === "single" ? "deployments" : "replica sets";
+  return `${parts.join(" + ")} ${unit}, ${plural(estateNodeCount(topology), "node")} total`;
+};
+
 type Props = { readonly topology: Topology } & EditProps;
 
 export function LicenseBoundaryDiagram({ topology, onChange }: Props) {
+  const badge = estateBadge(topology);
   return (
     <figure className="diagram" aria-label="License boundary diagram">
-      <figcaption>
-        {topology.hosting === "vm" ? "VMs: the dashed box is the license" : "Kubernetes: only dashed pod limits count"}
+      <figcaption className="diagram-head">
+        <span>
+          {topology.hosting === "vm"
+            ? "Each dashed VM box is a licensed unit"
+            : "Only dashed pod memory limits count, not requests or worker RAM"}
+        </span>
+        {badge && <span className="chip chip-strong">{badge}</span>}
       </figcaption>
       {topology.hosting === "vm" ? (
         <VmDiagram topology={topology} onChange={onChange} />

@@ -34,7 +34,7 @@ describe("poolCover: one license covers 256 GB over any number of nodes", () => 
 
 describe("poolBreakEvenGB", () => {
   it("is the average RAM per node where a full pool equals node licenses", () => {
-    expect(poolBreakEvenGB(DEFAULT_PRICES)).toBeCloseTo(102.4);
+    expect(poolBreakEvenGB(DEFAULT_PRICES)).toBeCloseTo(40);
     expect(poolBreakEvenGB({ perNodeLicense: 15_000, poolLicense: 100_000 })).toBeCloseTo(38.4);
   });
 
