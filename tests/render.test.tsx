@@ -37,7 +37,25 @@ describe("render smoke tests", () => {
     expect(html).toContain("Free");
     expect(html).toContain("1 license");
     expect(html).toContain("Add node");
+    expect(html).toContain("Add node (non-prod, 50%)");
+    expect(html).toContain("Non-prod");
     expect(html).toContain("Arbiter");
+  });
+
+  it("marks non-prod VMs and shows prod and non-prod licenses on the scoreboard", () => {
+    const topology = preset("rs-nonprod").topology;
+    const diagram = renderToStaticMarkup(<LicenseBoundaryDiagram topology={topology} />);
+    expect(diagram).toContain("mongod · non-prod");
+    expect(diagram).toContain("1 license x 0.5");
+    const score = renderToStaticMarkup(<Scoreboard topology={topology} prices={DEFAULT_PRICES} />);
+    expect(score).toContain("3 prod + 2 non-prod");
+    expect(score).toContain("$400");
+  });
+
+  it("offers only a plain add button for Kubernetes pods", () => {
+    const html = renderToStaticMarkup(<LicenseBoundaryDiagram topology={preset("k8s-3pods").topology} onChange={noop} />);
+    expect(html).toContain("Add pod");
+    expect(html).not.toContain("non-prod, 50%");
   });
 
   it("hides editing controls when the diagram is read-only", () => {

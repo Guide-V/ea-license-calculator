@@ -55,9 +55,13 @@ Request: less text, more interaction, gamification.
 22. **The pool is one 256 GB license, priced per license.** Bug report 1: the user set the 256 GB pool to 100,000 but left the other tiers at placeholder values, so the "cheapest" mix became 6 x 128 GB at 2,580. Clarification from the user: one 256 GB RAM pool license lets a customer run any number of nodes as long as their combined RAM stays within 256 GB. Fix: removed the 64 and 128 GB tiers and the knapsack. `poolCover` in `src/calc/ramPool.ts` returns `ceil(total / 256)` licenses. There is one pool price input. Break-even for a full pool is `256 x perNode / pool` GB per node. Presets and tests were re-derived (3 x 16 GB: pool 250 vs per-node 300, 3 nodes up to 85 GB each favor the pool). Consequence: a 3-node replica set below 256 GB total leaves most of the license unused, which the Pool fill meter now shows. The guide's 64 and 128 GB tiers are no longer modeled; confirm with the account team if they exist.
 23. **The mixed-size chart note is back.** Decision 7 said the break-even chart assumes identical members at the average RAM and shows a note when members differ. Decision 20 removed chart notes in favor of chips and the legend. That left the You dot unexplained: with 512 + 16 + 16 GB the real per-node cost is 4 licenses, while the curve at the average (about 181 GB) shows 3. The note returns only in that case, as one line under the chart: the curve assumes equal-size members and the dot shows the real cost. The old multi-note block stays gone.
 
+## Non-prod nodes (2026-11-20)
+
+24. **Each data-bearing member is prod or non-prod.** Request: add a non-prod node license at half the prod price, let "Add node" add non-prod nodes, and have the RAM pool treat every node the same. Implementation: `Member.env` ("prod" | "nonprod", default prod), `NONPROD_PRICE_FACTOR = 0.5` in `src/calc/rules.ts`. Per-node cost is `sum(ceil(RAM / 256) x perNodePrice x factor)`, so a big non-prod node still needs one half-price license per 256 GB. The pool ignores `env`: total RAM is the same sum as before. Why a constant and not a price input: the request fixed it at half. If the ratio changes, make it a field on `Prices`. The VM diagram has two add buttons (prod, non-prod) and a "Non-prod" toggle per node. Kubernetes shows no environment, because per-node is unavailable there and the pool does not care. Arbiters stay free whatever their environment. The break-even chart takes `nonProdCount`, so its per-node line uses the same weighted node count. A new preset (3 prod + 2 non-prod, 64 GB) shows per-node winning, 400 vs 500, where all-prod ties.
+
 ## Not modeled (known gaps)
 
-- Dev/QA and non-prod environments, discounts, support SLA uplift.
+- Free dev/QA environments, other discounts, support SLA uplift. (Non-prod nodes at half price are modeled, see decision 24.)
 - Sharded clusters, config servers, and `mongos` (the guide treats config servers as free).
 - Multiple deployments in one estate with grand totals.
 - Shareable URL for a configuration.
@@ -72,6 +76,7 @@ Core tests cover: per-node license counts (256, 257, 384, 512, 513, 768, 769 GB)
 
 - 2026-11-19: Initial build of the full app from the approved plan.
 - 2026-11-19: Game layer: scoreboard, baseline, badges, interactive diagram and chart, text cut.
+- 2026-11-20: Non-prod nodes at half price per-node, same entitlement in the pool, add buttons, toggle, preset, tests.
 - 2026-11-19: Pool is one 256 GB license priced per license; tiers and knapsack removed; tests, presets, docs updated.
 - 2026-11-19: Deployed to Vercel (team guide-v, project ea-license-calculator) with the CLI. Why CLI: linking the GitHub repo failed because the Vercel GitHub app lacks access to the Guide-V org, so pushes do not auto-deploy yet.
 - 2026-11-19: Quick fixes. Role changes go through `updateMember`, which now refuses to turn the last data-bearing member into an arbiter (the diagram already used `toggleArbiter`). The member slider uses `MAX_MEMBERS` and ignores a thumb that is only clamped below the real count. The mixed-size chart note is reinstated (decision 23). Shipped source lines use generic titles. CI runs install, test, typecheck, and build. MIT license added.

@@ -1,4 +1,4 @@
-import { billableMembers } from "./members";
+import { billableMembers, isNonProd, nodePriceFactor } from "./members";
 import { NODE_RAM_CAP_GB } from "./rules";
 import type { Prices, Topology } from "./types";
 
@@ -9,9 +9,12 @@ export const licensesForNode = (ramGB: number): number =>
 export type PerNodeResult =
   | {
       readonly available: true;
+      /** All node licenses, prod and non-prod. */
       readonly licenses: number;
+      readonly prodLicenses: number;
+      readonly nonProdLicenses: number;
       readonly cost: number;
-      readonly perMember: readonly { readonly id: number; readonly licenses: number }[];
+      readonly perMember: readonly { readonly id: number; readonly licenses: number; readonly nonProd: boolean }[];
     }
   | { readonly available: false; readonly reason: string };
 
@@ -22,10 +25,18 @@ export const perNodeCost = (topology: Topology, prices: Prices): PerNodeResult =
       reason: "Per-node licensing is not available for containerized deployments. Use the RAM pool.",
     };
   }
-  const perMember = billableMembers(topology).map((member) => ({
+  const members = billableMembers(topology);
+  const perMember = members.map((member) => ({
     id: member.id,
     licenses: licensesForNode(member.ramGB),
+    nonProd: isNonProd(member),
   }));
-  const licenses = perMember.reduce((sum, entry) => sum + entry.licenses, 0);
-  return { available: true, licenses, cost: licenses * prices.perNodeLicense, perMember };
+  const sum = (entries: readonly { readonly licenses: number }[]) => entries.reduce((total, entry) => total + entry.licenses, 0);
+  const nonProdLicenses = sum(perMember.filter((entry) => entry.nonProd));
+  const licenses = sum(perMember);
+  const cost = members.reduce(
+    (total, member) => total + licensesForNode(member.ramGB) * prices.perNodeLicense * nodePriceFactor(member),
+    0,
+  );
+  return { available: true, licenses, prodLicenses: licenses - nonProdLicenses, nonProdLicenses, cost, perMember };
 };

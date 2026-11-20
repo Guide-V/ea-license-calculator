@@ -1,5 +1,8 @@
 export type Role = "primary" | "secondary" | "hidden" | "delayed" | "arbiter";
 
+/** Non-prod members cost half under per-node licensing. The RAM pool treats them like prod. */
+export type Environment = "prod" | "nonprod";
+
 export type Hosting = "vm" | "k8s";
 
 export type TopologyKind = "single" | "replicaSet";
@@ -7,6 +10,7 @@ export type TopologyKind = "single" | "replicaSet";
 export type Member = {
   readonly id: number;
   readonly role: Role;
+  readonly env: Environment;
   readonly vcpu: number;
   /** VM RAM on VMs, or the enforced pod memory limit on Kubernetes. */
   readonly ramGB: number;

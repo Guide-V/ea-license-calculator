@@ -8,6 +8,9 @@ import type { K8sSettings, Prices } from "./types";
 /** One per-node license covers a data-bearing mongod with up to this much RAM. */
 export const NODE_RAM_CAP_GB = 256;
 
+/** A non-prod node license costs this share of a prod node license. Pool entitlements are identical for both. */
+export const NONPROD_PRICE_FACTOR = 0.5;
+
 /** One RAM pool license covers this much combined RAM, over any number of nodes. */
 export const POOL_LICENSE_GB = 256;
 

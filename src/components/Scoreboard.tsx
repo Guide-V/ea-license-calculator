@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { evaluate, recommend, type Recommendation } from "../calc/evaluate";
 import { billableMembers } from "../calc/members";
+import type { PerNodeResult } from "../calc/perNode";
 import type { PoolCover } from "../calc/ramPool";
 import { POOL_LICENSE_GB } from "../calc/rules";
 import type { Model, Prices, Topology } from "../calc/types";
@@ -35,6 +36,11 @@ const MODEL_LABEL = (winner: Model | "tie"): string =>
 
 const mixText = (pool: PoolCover): string =>
   pool.licenses === 0 ? "none" : `${pool.licenses} x ${POOL_LICENSE_GB} GB`;
+
+const perNodeTag = (perNode: Extract<PerNodeResult, { available: true }>): string =>
+  perNode.nonProdLicenses === 0
+    ? plural(perNode.licenses, "license")
+    : `${perNode.prodLicenses} prod + ${perNode.nonProdLicenses} non-prod`;
 
 const verdictText = (recommendation: Recommendation, fmt: (value: number) => string): string =>
   recommendation.forced
@@ -185,7 +191,7 @@ export function Scoreboard({ topology, prices, compact = false, baseline = null,
           label="Per-node"
           cost={perNode.available ? perNode.cost : null}
           max={maxCost}
-          tag={perNode.available ? plural(perNode.licenses, "license") : "pool only on Kubernetes"}
+          tag={perNode.available ? perNodeTag(perNode) : "pool only on Kubernetes"}
           locked={!perNode.available}
           winner={recommendation.winner === "perNode"}
           currency={prices.currency}

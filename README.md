@@ -7,15 +7,15 @@ A static site that explains MongoDB Enterprise Advanced (EA) licensing and helps
 ## Features
 
 - Short, tap-to-expand explainer and a compact per-node versus RAM pool table.
-- Single node or replica set (1 to 50 members). Roles: primary, secondary, hidden, delayed, arbiter.
+- Single node or replica set (1 to 50 members). Roles: primary, secondary, hidden, delayed, arbiter. Each data-bearing member is **prod** or **non-prod**.
 - Build fast: quick RAM chips, node steppers, log-scale sliders, and per-member fine-tuning.
 - Hosting toggle: **VMs**, **Kubernetes**, or **side by side**.
 - **Scoreboard** (see "Game layer"): rolling cost, winner, savings, pinned baseline, battle bars, meters, badges.
-- **Interactive diagram**: tap *Arbiter* to toggle a free arbiter, `x` to drop a node, or the dashed ghost card to add one.
+- **Interactive diagram**: tap *Non-prod* to switch a node to half price, *Arbiter* to toggle a free arbiter, `x` to drop a node, or a ghost card to add a prod or non-prod node.
   - VMs: the whole VM is the licensed unit, with a notch per 256 GB license.
   - Kubernetes: only each pod's memory limit counts toward the pool. Uncounted worker RAM is hatched.
 - **Break-even chart**: click or drag on it (or use the slider) to change RAM per node. Chips show who wins where, with a one-tap jump to the nearest break-even.
-- Five presets, editable placeholder prices, and **Export PDF** (browser print to PDF).
+- Six presets, editable placeholder prices, and **Export PDF** (browser print to PDF).
 
 ## Game layer
 
@@ -41,6 +41,7 @@ Source: internal EA Pricing Guide, updated 2026-11-04 (see `spec.md`).
 | --- | --- |
 | Per-node | One license per data-bearing `mongod`, covering up to 256 GB RAM. `ceil(RAM / 256)` licenses per node. |
 | RAM pool | One license covers 256 GB of combined data-bearing RAM, spread over any number of nodes. Buy enough licenses for the total (257 GB needs 2). |
+| Non-prod | A non-prod node license costs 50% of a prod node license (same 256 GB cap, so a 384 GB non-prod node needs 2 half-price licenses). The RAM pool gives prod and non-prod the same entitlement: their RAM is added together at full weight. |
 | Free | Arbiters. Config servers and `mongos` are not data-bearing. |
 | Kubernetes | Per-node is not available. The pool counts each data-bearing container's memory limit, not worker RAM. |
 | vCPU | Shown only. It does not affect license counts. |

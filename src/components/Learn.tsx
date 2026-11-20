@@ -5,8 +5,8 @@ import { Segmented } from "./Segmented";
 type Tab = "how" | "versus";
 
 const TILES = [
-  { title: "Per-node", short: "1 license per data node", more: `Covers up to ${NODE_RAM_CAP_GB} GB RAM. 384 GB needs 2.` },
-  { title: "RAM pool", short: "Buy GB, not nodes", more: `One license covers ${POOL_LICENSE_GB} GB of combined RAM, over any number of nodes.` },
+  { title: "Per-node", short: "1 license per data node", more: `Covers up to ${NODE_RAM_CAP_GB} GB RAM. 384 GB needs 2. Non-prod nodes cost half.` },
+  { title: "RAM pool", short: "Buy GB, not nodes", more: `One license covers ${POOL_LICENSE_GB} GB of combined RAM, over any number of nodes. Prod and non-prod RAM count the same.` },
   { title: "Free", short: "Arbiters cost nothing", more: "Config servers too. Only data-bearing nodes count." },
   { title: "Kubernetes", short: "Pool only", more: "Counts pod memory limits, not worker RAM." },
 ] as const;
@@ -15,6 +15,7 @@ const VERSUS = [
   { label: "Counts", node: "Nodes", pool: "Total GB" },
   { label: "Grow a node", node: "Free to 256 GB", pool: "Uses pool" },
   { label: "Add replicas", node: "+1 license each", pool: "+ their RAM" },
+  { label: "Non-prod", node: "Half price", pool: "Same as prod" },
   { label: "Kubernetes", node: "Not available", pool: "Only option" },
   { label: "Best for", node: "Few big nodes", pool: "Many small nodes" },
 ] as const;

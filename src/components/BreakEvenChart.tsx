@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { breakEvenPoints, costCurve, winRegions } from "../calc/breakEven";
 import { evaluate } from "../calc/evaluate";
-import { billableMembers } from "../calc/members";
+import { billableMembers, isNonProd } from "../calc/members";
 import { MAX_RAM_GB } from "../calc/rules";
 import type { Prices, Topology } from "../calc/types";
 import { nearestCrossover } from "../game/presentation";
@@ -61,7 +61,8 @@ export function BreakEvenChart({ topology, prices, onRamChange }: Props) {
   const avgRam = count === 0 ? 0 : members.reduce((sum, m) => sum + m.ramGB, 0) / count;
   const perNodeAvailable = topology.hosting === "vm";
 
-  const full = useMemo(() => costCurve(count, prices, { maxGB: 1024 }), [count, prices]);
+  const nonProdCount = members.filter(isNonProd).length;
+  const full = useMemo(() => costCurve(count, prices, { maxGB: 1024, nonProdCount }), [count, prices, nonProdCount]);
   const crossovers = useMemo(() => breakEvenPoints(full), [full]);
   const regions = useMemo(() => winRegions(full), [full]);
 

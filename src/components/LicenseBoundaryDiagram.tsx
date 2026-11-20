@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { layoutWorkers } from "../calc/k8s";
-import { isDataBearing } from "../calc/members";
+import { isDataBearing, isNonProd } from "../calc/members";
 import { licensesForNode } from "../calc/perNode";
-import { MAX_MEMBERS, NODE_RAM_CAP_GB } from "../calc/rules";
-import { addMember, removeMember, toggleArbiter } from "../calc/topology";
+import { MAX_MEMBERS, NODE_RAM_CAP_GB, NONPROD_PRICE_FACTOR } from "../calc/rules";
+import { addMember, removeMember, toggleArbiter, toggleEnv } from "../calc/topology";
 import type { Member, Role, Topology } from "../calc/types";
 import { plural } from "../ui/format";
 
@@ -26,38 +26,72 @@ type ActionsProps = {
   readonly onChange: (topology: Topology) => void;
 };
 
-/** Tap actions for one member: toggle arbiter, drop. The first member is the anchor and stays put. */
+/**
+ * Tap actions for one member: toggle non-prod, toggle arbiter, drop.
+ * The first member is the anchor: it can switch environment but never moves.
+ * Environment only matters per-node (VMs), so Kubernetes pods hide it.
+ */
 function Actions({ topology, member, index, onChange }: ActionsProps) {
-  if (topology.kind === "single" || index === 0) return null;
+  const anchor = topology.kind === "single" || index === 0;
+  const showEnv = member.role !== "arbiter" && topology.hosting === "vm";
+  if (anchor && !showEnv) return null;
   return (
     <div className="node-actions no-print">
-      <button
-        type="button"
-        className="mini"
-        aria-pressed={member.role === "arbiter"}
-        onClick={() => onChange(toggleArbiter(topology, member.id))}
-      >
-        Arbiter
-      </button>
-      <button
-        type="button"
-        className="mini mini-x"
-        aria-label={`Remove ${ROLE_LABEL[member.role]} member ${index + 1}`}
-        onClick={() => onChange(removeMember(topology, member.id))}
-      >
-        x
-      </button>
+      {showEnv && (
+        <button
+          type="button"
+          className="mini"
+          aria-pressed={isNonProd(member)}
+          aria-label={`Non-prod, member ${index + 1}`}
+          onClick={() => onChange(toggleEnv(topology, member.id))}
+        >
+          Non-prod
+        </button>
+      )}
+      {!anchor && (
+        <>
+          <button
+            type="button"
+            className="mini"
+            aria-pressed={member.role === "arbiter"}
+            onClick={() => onChange(toggleArbiter(topology, member.id))}
+          >
+            Arbiter
+          </button>
+          <button
+            type="button"
+            className="mini mini-x"
+            aria-label={`Remove ${ROLE_LABEL[member.role]} member ${index + 1}`}
+            onClick={() => onChange(removeMember(topology, member.id))}
+          >
+            x
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
-function AddGhost({ topology, onChange, label }: { readonly topology: Topology; readonly onChange: (t: Topology) => void; readonly label: string }) {
+type AddGhostProps = {
+  readonly topology: Topology;
+  readonly onChange: (t: Topology) => void;
+  readonly label: string;
+  /** Offer a second, half-price non-prod button. Only meaningful per-node. */
+  readonly nonProd?: boolean;
+};
+
+function AddGhost({ topology, onChange, label, nonProd = false }: AddGhostProps) {
   if (topology.kind === "single" || topology.members.length >= MAX_MEMBERS) return null;
   return (
-    <li className="ghost no-print">
-      <button type="button" onClick={() => onChange(addMember(topology, "secondary"))}>
+    <li className={nonProd ? "ghost ghost-split no-print" : "ghost no-print"}>
+      <button type="button" onClick={() => onChange(addMember(topology, "secondary", "prod"))}>
         <span aria-hidden="true">+</span> {label}
       </button>
+      {nonProd && (
+        <button type="button" onClick={() => onChange(addMember(topology, "secondary", "nonprod"))}>
+          <span aria-hidden="true">+</span> {label} (non-prod, {Math.round(NONPROD_PRICE_FACTOR * 100)}%)
+        </button>
+      )}
     </li>
   );
 }
@@ -68,6 +102,8 @@ function VmBox({ topology, member, index, onChange }: VmBoxProps) {
   const billed = isDataBearing(member);
   const licenses = licensesForNode(member.ramGB);
   const capacity = licenses * NODE_RAM_CAP_GB;
+  const nonProd = billed && isNonProd(member);
+  const tag = !billed ? "Free" : nonProd ? `${plural(licenses, "license")} x ${NONPROD_PRICE_FACTOR}` : plural(licenses, "license");
   return (
     <motion.li
       layout
@@ -75,12 +111,12 @@ function VmBox({ topology, member, index, onChange }: VmBoxProps) {
       animate={{ opacity: billed ? 1 : 0.75, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
       transition={spring}
-      className={billed ? "vm vm-billed" : "vm vm-free"}
-      aria-label={`${ROLE_LABEL[member.role]} VM, ${member.ramGB} GB, ${billed ? plural(licenses, "license") : "not counted"}`}
+      className={!billed ? "vm vm-free" : nonProd ? "vm vm-billed vm-nonprod" : "vm vm-billed"}
+      aria-label={`${ROLE_LABEL[member.role]} VM, ${member.ramGB} GB, ${billed ? `${nonProd ? "non-prod, " : ""}${plural(licenses, "license")}` : "not counted"}`}
     >
       <div className="vm-head">
         <span className="vm-role">{ROLE_LABEL[member.role]}</span>
-        <span className="vm-tag">{billed ? plural(licenses, "license") : "Free"}</span>
+        <span className="vm-tag">{tag}</span>
       </div>
       <div className="vm-specs">
         {member.vcpu} vCPU, {member.ramGB} GB
@@ -101,7 +137,7 @@ function VmBox({ topology, member, index, onChange }: VmBoxProps) {
         )}
       </div>
       <div className="vm-foot">
-        <span className="vm-chip">mongod</span>
+        <span className="vm-chip">{nonProd ? "mongod · non-prod" : "mongod"}</span>
         {onChange && <Actions topology={topology} member={member} index={index} onChange={onChange} />}
       </div>
     </motion.li>
@@ -116,7 +152,7 @@ function VmDiagram({ topology, onChange }: { readonly topology: Topology } & Edi
           <VmBox key={member.id} topology={topology} member={member} index={index} onChange={onChange} />
         ))}
       </AnimatePresence>
-      {onChange && <AddGhost topology={topology} onChange={onChange} label="Add node" />}
+      {onChange && <AddGhost topology={topology} onChange={onChange} label="Add node" nonProd />}
     </ul>
   );
 }

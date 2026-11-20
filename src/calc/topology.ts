@@ -1,6 +1,6 @@
 import { isDataBearing } from "./members";
 import { DEFAULT_K8S, MAX_MEMBERS, MAX_RAM_GB, MAX_VCPU, MIN_RAM_GB } from "./rules";
-import type { Hosting, Member, Role, Topology, TopologyKind } from "./types";
+import type { Environment, Hosting, Member, Role, Topology, TopologyKind } from "./types";
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
@@ -8,9 +8,10 @@ const clamp = (value: number, min: number, max: number): number =>
 export const nextId = (members: readonly Member[]): number =>
   members.reduce((max, member) => Math.max(max, member.id), 0) + 1;
 
-export const makeMember = (id: number, role: Role, vcpu: number, ramGB: number): Member => ({
+export const makeMember = (id: number, role: Role, vcpu: number, ramGB: number, env: Environment = "prod"): Member => ({
   id,
   role,
+  env,
   vcpu: clamp(Math.round(vcpu), 1, MAX_VCPU),
   ramGB: clamp(Math.round(ramGB), MIN_RAM_GB, MAX_RAM_GB),
 });
@@ -59,10 +60,10 @@ export const setKind = (topology: Topology, kind: TopologyKind): Topology => {
   return { ...topology, kind, members: [...topology.members, ...filler] };
 };
 
-export const addMember = (topology: Topology, role: Role = "secondary"): Topology => {
+export const addMember = (topology: Topology, role: Role = "secondary", env: Environment = "prod"): Topology => {
   if (topology.kind === "single" || topology.members.length >= MAX_MEMBERS) return topology;
   const template = topology.members.find(isDataBearing) ?? topology.members[0];
-  const member = makeMember(nextId(topology.members), role, template?.vcpu ?? 4, template?.ramGB ?? 16);
+  const member = makeMember(nextId(topology.members), role, template?.vcpu ?? 4, template?.ramGB ?? 16, env);
   return { ...topology, members: [...topology.members, member] };
 };
 
@@ -110,7 +111,7 @@ export const removeMember = (topology: Topology, id: number): Topology => {
 export const updateMember = (
   topology: Topology,
   id: number,
-  patch: Partial<Pick<Member, "role" | "vcpu" | "ramGB">>,
+  patch: Partial<Pick<Member, "role" | "vcpu" | "ramGB" | "env">>,
 ): Topology => {
   const current = topology.members.find((member) => member.id === id);
   if (!current) return topology;
@@ -124,7 +125,7 @@ export const updateMember = (
     ...topology,
     members: topology.members.map((member) =>
       member.id === id
-        ? makeMember(member.id, role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB)
+        ? makeMember(member.id, role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB, patch.env ?? member.env)
         : member,
     ),
   };
@@ -137,6 +138,12 @@ export const setAllSizes = (
 ): Topology => ({
   ...topology,
   members: topology.members.map((member) =>
-    makeMember(member.id, member.role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB),
+    makeMember(member.id, member.role, patch.vcpu ?? member.vcpu, patch.ramGB ?? member.ramGB, member.env),
   ),
 });
+
+/** Prod <-> non-prod. Arbiters are free, so their environment never matters. */
+export const toggleEnv = (topology: Topology, id: number): Topology => {
+  const target = topology.members.find((member) => member.id === id);
+  return target ? updateMember(topology, id, { env: target.env === "prod" ? "nonprod" : "prod" }) : topology;
+};

@@ -502,6 +502,15 @@ input[type="number"] {
   border: 2px dashed var(--chartreuse);
 }
 
+.vm-nonprod {
+  border-style: dotted;
+  border-color: var(--spring);
+}
+
+.vm-nonprod .vm-tag {
+  color: var(--spring);
+}
+
 .vm-free {
   border: 2px dashed #5c6c75;
   opacity: 0.7;
@@ -1459,10 +1468,12 @@ input[type="number"] {
 
 .node-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.3rem;
 }
 
 .mini {
+  white-space: nowrap;
   font: inherit;
   font-size: 0.72rem;
   color: var(--off-white);
@@ -1516,6 +1527,17 @@ input[type="number"] {
   border-color: var(--chartreuse);
   color: var(--chartreuse);
   transform: scale(1.02);
+}
+
+.ghost-split {
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ghost-split button {
+  min-height: 46px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
 }
 
 .ghost button span {

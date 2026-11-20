@@ -10,7 +10,7 @@ import {
   setMemberCountFromSlider,
   updateMember,
 } from "../calc/topology";
-import type { Role, Topology } from "../calc/types";
+import type { Environment, Role, Topology } from "../calc/types";
 import { Segmented } from "./Segmented";
 import { SizeControl } from "./SizeControl";
 
@@ -26,6 +26,11 @@ const ROLES: readonly { readonly value: Role; readonly label: string }[] = [
   { value: "hidden", label: "Hidden" },
   { value: "delayed", label: "Delayed" },
   { value: "arbiter", label: "Arbiter (free)" },
+];
+
+const ENVS: readonly { readonly value: Environment; readonly label: string }[] = [
+  { value: "prod", label: "Prod" },
+  { value: "nonprod", label: "Non-prod" },
 ];
 
 const QUICK_RAM = [8, 16, 32, 64, 128, 256, 512] as const;
@@ -166,6 +171,18 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
                     );
                   })}
                 </select>
+                <select
+                  aria-label={`Environment of member ${index + 1}`}
+                  value={member.env}
+                  disabled={!isDataBearing(member)}
+                  onChange={(event) => onChange(updateMember(topology, member.id, { env: event.target.value as Environment }))}
+                >
+                  {ENVS.map((env) => (
+                    <option key={env.value} value={env.value}>
+                      {env.label}
+                    </option>
+                  ))}
+                </select>
                 <input
                   aria-label={`${ramLabel} of member ${index + 1}`}
                   type="number"
@@ -198,6 +215,9 @@ export function TopologyBuilder({ topology, showK8s, onChange }: Props) {
           <div className="row-actions">
             <button type="button" className="btn" disabled={count >= MAX_MEMBERS} onClick={() => onChange(addMember(topology, "secondary"))}>
               Add member
+            </button>
+            <button type="button" className="btn" disabled={count >= MAX_MEMBERS} onClick={() => onChange(addMember(topology, "secondary", "nonprod"))}>
+              Add non-prod member
             </button>
             <button type="button" className="btn" disabled={count >= MAX_MEMBERS} onClick={() => onChange(addMember(topology, "arbiter"))}>
               Add arbiter

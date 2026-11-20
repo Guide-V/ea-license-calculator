@@ -1,4 +1,5 @@
 import { licensesForNode } from "./perNode";
+import { NONPROD_PRICE_FACTOR } from "./rules";
 import { poolCover } from "./ramPool";
 import type { Model, Prices } from "./types";
 
@@ -17,16 +18,24 @@ const winnerOf = (perNode: number, ramPool: number): Model | "tie" =>
 
 /**
  * Cost of `memberCount` identical data-bearing members as their RAM grows.
+ * `nonProdCount` of them are non-prod: half price per-node, full RAM in the pool.
  * Both models are step functions, so the curve is sampled at every `step` GB.
  */
 export const costCurve = (
   memberCount: number,
   prices: Prices,
-  options: { readonly minGB?: number; readonly maxGB?: number; readonly step?: number } = {},
+  options: {
+    readonly minGB?: number;
+    readonly maxGB?: number;
+    readonly step?: number;
+    readonly nonProdCount?: number;
+  } = {},
 ): readonly CurvePoint[] => {
-  const { minGB = 1, maxGB = 512, step = 1 } = options;
+  const { minGB = 1, maxGB = 512, step = 1, nonProdCount = 0 } = options;
+  const nonProd = Math.min(Math.max(0, nonProdCount), memberCount);
+  const weightedNodes = memberCount - nonProd + nonProd * NONPROD_PRICE_FACTOR;
   return range(minGB, maxGB, step).map((ramGB) => {
-    const perNode = memberCount * licensesForNode(ramGB) * prices.perNodeLicense;
+    const perNode = weightedNodes * licensesForNode(ramGB) * prices.perNodeLicense;
     const ramPool = poolCover(memberCount * ramGB, prices).cost;
     return { ramGB, perNode, ramPool, winner: winnerOf(perNode, ramPool) };
   });

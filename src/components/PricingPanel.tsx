@@ -1,4 +1,4 @@
-import { DEFAULT_PRICES, POOL_LICENSE_GB } from "../calc/rules";
+import { DEFAULT_PRICES, NONPROD_PRICE_FACTOR, POOL_LICENSE_GB } from "../calc/rules";
 import type { Prices } from "../calc/types";
 
 type Props = { readonly prices: Prices; readonly onChange: (prices: Prices) => void };
@@ -43,6 +43,11 @@ export function PricingPanel({ prices, onChange }: Props) {
           />
         </label>
       </div>
+      <p className="hint">
+        Non-prod node license: {Math.round(NONPROD_PRICE_FACTOR * 100)}% of the per-node price ({prices.currency}
+        {Math.round(prices.perNodeLicense * NONPROD_PRICE_FACTOR).toLocaleString("en-US")}). The RAM pool counts prod and
+        non-prod RAM the same.
+      </p>
       <button type="button" className="btn" onClick={() => onChange(DEFAULT_PRICES)}>
         Reset
       </button>
